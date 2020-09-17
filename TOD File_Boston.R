@@ -67,13 +67,29 @@ q5 <- function(variable) {as.factor(ntile(variable, 5))}
 palette5 <- c("#f0f9e8","#bae4bc","#7bccc4","#43a2ca","#0868ac")
 
 # Input API key
-census_api_key("d9ebfd04caa0138647fbacd94c657cdecbf705e9", overwrite = TRUE)
+census_api_key("d9ebfd04caa0138647fbacd94c657cdecbf705e9", install = TRUE, overwrite = TRUE)
 
-# Tracts, Median Contract Rent, 
+# Tracts, Median Rent, MHHINC, Population, GRad/Prof Degree, No Vehicle (home owner, renter)
 ## projection (NAD 1983 StatePlane Massachusetts Mainland FIPS 2001 Feet)
-tracts00 <-  
-  get_acs(geography = "tract", variables = c("B25058_001E"), 
-                year=2012, state=25, county=025, geometry=T) %>% 
+tracts10 <-  
+  get_acs(geography = "tract", variables = c("B25058_001E", "B19013_001E", "B01003_001E", "B20004_006E", 
+                                             "B25044_003E", "B25044_010E"), 
+                year=2010, state=25, county=025, geometry=T) %>% 
   st_transform('ESRI:102686')
 
-# 
+# Sample plot
+plot(tracts10)
+
+RentPlot1 <- 
+  ggplot() +
+  geom_sf(data = tracts00, aes(fill = q5(estimate))) +
+  scale_fill_manual(values = palette5,
+                    labels = qBr(tracts00, "estimate"),
+                    name = "Rent\n(Quintile Breaks)") +
+  labs(title = "Median Contract Rent", subtitle = "Boston; 2012") +
+  mapTheme() + theme(plot.title = element_text(size=22))
+
+# Rename variable
+tracts00 <- 
+  tracts00 %>%
+  rename(Rent = estimate)
