@@ -76,4 +76,5 @@ tracts00 <-
                 year=2012, state=25, county=025, geometry=T) %>% 
   st_transform('ESRI:102686')
 
-# 
+
+
