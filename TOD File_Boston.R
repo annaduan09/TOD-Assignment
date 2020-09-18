@@ -1,5 +1,6 @@
 # We're looking at the relationship between TOD, rent, and crime rate in Boston, MA
 # within the time frame of 2012-2018
+# Projected CRS: NAD_1983_StatePlane_Massachusetts_Mainland_FIPS_2001_Feet
 
 # Libraries
 library(tidyverse)
@@ -77,19 +78,36 @@ tracts10 <-
                 year=2010, state=25, county=025, geometry=T) %>% 
   st_transform('ESRI:102686')
 
-# Sample plot
-plot(tracts10)
+# Tester plots
 
-RentPlot1 <- 
+totalPop10 <-
+  tracts10 %>%
+  filter(variable == "B01003_001")
+
+plot(totalPop10)
+
+NetPop <- 
   ggplot() +
-  geom_sf(data = tracts00, aes(fill = q5(estimate))) +
+  geom_sf(data = totalPop10, aes(fill = q5(estimate))) +
   scale_fill_manual(values = palette5,
-                    labels = qBr(tracts00, "estimate"),
-                    name = "Rent\n(Quintile Breaks)") +
-  labs(title = "Median Contract Rent", subtitle = "Boston; 2012") +
+                    labels = qBr(totalPop10, "estimate"),
+                    name = "Population\n(Quintile Breaks)") +
+  labs(title = "Total Population", subtitle = "Boston; 2010") +
   mapTheme() + theme(plot.title = element_text(size=22))
 
-# Rename variable
-tracts00 <- 
-  tracts00 %>%
-  rename(Rent = estimate)
+# Spread Tables
+tracts10 <- 
+  tracts10 %>%
+  dplyr::select( -NAME, -moe) %>%
+  spread(variable, estimate) %>%
+  dplyr::select(-geometry) %>%
+  rename(MedianRent = B25058_001, 
+         MedHHInc = B19013_001,
+         Population = B01003_001, 
+         GradorProfDegree = B20004_006,
+         NoVehicleOwner = B25044_003, 
+         NoVehicleRenter = B25044_010)
+
+st_drop_geometry(tracts10)[1:3,]
+
+# 
