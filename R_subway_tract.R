@@ -75,22 +75,26 @@ census_api_key("d9ebfd04caa0138647fbacd94c657cdecbf705e9", install = TRUE, overw
 
 #BC mine: 0e3cc3910723434685f1e4c5df2ac519c0790ba5
 rm(sub_16_5, sub_17_5)
-# Tracts, Median Rent, MHHINC, Population, GRad/Prof Degree, No. Vehicle (home owner, renter)
+# Tracts, Median Rent, MHHINC, Population, Bachelor's, No. Vehicle (home owner, renter)
 ## projection (NAD 1983 StatePlane Massachusetts Mainland FIPS 2001 Feet)
 tracts10 <-  #BC tracts12 maybe?
-  get_acs(geography = "tract", variables = c("B25058_001E", "B19013_001E", "B01003_001E", "B20004_006E", 
+            #AD - Professor said to do 2010, maybe so there's more years between
+  get_acs(geography = "tract", variables = c("B25058_001E", "B19013_001E", "B01003_001E", "B06009_005E", 
                                              "B25044_003E", "B25044_010E"), 
           year=2010, state=25, county=025, geometry=T) %>% 
   st_transform('ESRI:102686')
 
 #BC not sure if we do the year 2012 and 2019 or?
+#AD the professor said to do 2010 and 2019
+
 #BC https://en.wikipedia.org/wiki/MBTA_subway 
 #BC I think our focus will be mainly on silver line, which started on 2002
+#AD Sounds good
 
-tracts19 <-  
-  get_acs(geography = "tract", variables = c("B25058_001E", "B19013_001E", "B01003_001E", "B20004_006E", 
+tracts18 <-  
+  get_acs(geography = "tract", variables = c("B25058_001E", "B19013_001E", "B01003_001E", "B06009_005E", 
                                              "B25044_003E", "B25044_010E"), 
-          year=2019, state=25, county=025, geometry=T) %>% 
+          year=2018, state=25, county=025, geometry=T) %>% 
   st_transform('ESRI:102686')
 
 
@@ -113,20 +117,40 @@ RentPlot <-
   labs(title = "Median Contract Rent", subtitle = "Boston; 2010") +
   mapTheme() + theme(plot.title = element_text(size=22))
 # household income
-# to be filled
+tracts10_income <-
+  tracts10 %>%
+  filter(variable == "B19013_001")
+
+plot(tracts10_income[,4])
 
 # population
-# to be filled 
+tracts10_pop <-
+  tracts10 %>%
+  filter(variable == "B01003_001")
 
-# GRad/Prof Degree
-# BC: should we use bachelor degree instead of...?
-# to be filled
+plot(tracts10_pop[,4])
+
+# Bachelor's
+tracts10_bach <-
+  tracts10 %>%
+  filter(variable == "B06009_005")
+
+plot(tracts10_bach[,4])
 
 # No. Vehicle (home owner)
-# to be filled
+tracts10_noCarOwner <-
+  tracts10 %>%
+  filter(variable == "B25044_003")
+
+plot(tracts10_noCarOwner[,4])
 
 # No. Vehicle (renter)
-# to be filled
+tracts10_noCarRenter <-
+  tracts10 %>%
+  filter(variable == "B25044_010")
+
+plot(tracts10_noCarRenter[,4])
+
 
 ##############################long form to wide form###############################
 tracts10 <- 
@@ -137,14 +161,15 @@ tracts10 <-
   rename(Rent = B25058_001, 
          MedHHInc = B19013_001,
          Population = B01003_001, 
-         GPDegree = B20004_006,
-         Vehicle_hmow = B25044_003, 
-         Vehicle_hmre = B25044_010)
+         Bachelor = B06009_005,
+         NoVehicle_hmow = B25044_003, 
+         NoVehicle_hmre = B25044_010)
 
 st_drop_geometry(tracts10)[1:3,]
 ###################################mutate##########################################
 #I don't think we need to create any new variables here. But I just save the space
-
+#AD: I think we should normalize bachelor by adults, and add carless home owners 
+# and renters and divide that by total households
 
 
 ###############################plot data 19########################################
