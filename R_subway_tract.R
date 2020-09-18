@@ -75,12 +75,11 @@ census_api_key("d9ebfd04caa0138647fbacd94c657cdecbf705e9", install = TRUE, overw
 
 #BC mine: 0e3cc3910723434685f1e4c5df2ac519c0790ba5
 rm(sub_16_5, sub_17_5)
-# Tracts, Median Rent, MHHINC, Population, Bachelor's, No. Vehicle (home owner, renter)
+# Tracts, Median Rent, MHHINC, Population, Bachelor's, No. Vehicle (home owner, renter), Households (owner, renter)
 ## projection (NAD 1983 StatePlane Massachusetts Mainland FIPS 2001 Feet)
-tracts10 <-  #BC tracts12 maybe?
-            #AD - Professor said to do 2010, maybe so there's more years between
+tracts10 <-  
   get_acs(geography = "tract", variables = c("B25058_001E", "B19013_001E", "B01003_001E", "B06009_005E", 
-                                             "B25044_003E", "B25044_010E"), 
+                                             "B25044_003E", "B25044_010E", "B07013_002E", "B07013_003E"), 
           year=2010, state=25, county=025, geometry=T) %>% 
   st_transform('ESRI:102686')
 
@@ -93,7 +92,7 @@ tracts10 <-  #BC tracts12 maybe?
 
 tracts18 <-  
   get_acs(geography = "tract", variables = c("B25058_001E", "B19013_001E", "B01003_001E", "B06009_005E", 
-                                             "B25044_003E", "B25044_010E"), 
+                                             "B25044_003E", "B25044_010E", "B07013_002E", "B07013_003E"), 
           year=2018, state=25, county=025, geometry=T) %>% 
   st_transform('ESRI:102686')
 
@@ -151,6 +150,20 @@ tracts10_noCarRenter <-
 
 plot(tracts10_noCarRenter[,4])
 
+# No. Owner-occupied households
+tracts10_ownerHH <-
+  tracts10 %>%
+  filter(variable == "B07013_002")
+
+plot(tracts10_ownerHH[,4])
+
+# No. Renter-occupied households
+tracts10_renterHH <-
+  tracts10 %>%
+  filter(variable == "B07013_003")
+
+plot(tracts10_renterHH[,4])
+
 
 ##############################long form to wide form###############################
 tracts10 <- 
@@ -163,7 +176,9 @@ tracts10 <-
          Population = B01003_001, 
          Bachelor = B06009_005,
          NoVehicle_hmow = B25044_003, 
-         NoVehicle_hmre = B25044_010)
+         NoVehicle_hmre = B25044_010,
+         households_hmow = B07013_002,
+         households_hmre = B07013_003)
 
 st_drop_geometry(tracts10)[1:3,]
 ###################################mutate##########################################
