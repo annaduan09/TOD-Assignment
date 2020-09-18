@@ -175,47 +175,67 @@ st_drop_geometry(tracts10)[1:3,]
 ###############################plot data 19########################################
 ###################################################################################
 ##BC: I haven't changed the year below
+##AD: I changed it
 # rent
-tracts10_rent <-
-  tracts10 %>%
+tracts18_rent <-
+  tracts18 %>%
   filter(variable == "B25058_001")
 
-plot(tracts10_rent[,4])
+plot(tracts18_rent[,4])
 
 RentPlot <- 
   ggplot() +
-  geom_sf(data = tracts10_rent, aes(fill = q5(estimate))) +
+  geom_sf(data = tracts18_rent, aes(fill = q5(estimate))) +
   scale_fill_manual(values = palette5,
-                    labels = qBr(tracts10_rent, "estimate"),
+                    labels = qBr(tracts18_rent, "estimate"),
                     name = "Rent\n(Quintile Breaks)") +
-  labs(title = "Median Contract Rent", subtitle = "Boston; 2010") +
+  labs(title = "Median Contract Rent", subtitle = "Boston; 2018") +
   mapTheme() + theme(plot.title = element_text(size=22))
 # household income
-# to be filled
+tracts18_income <-
+  tracts18 %>%
+  filter(variable == "B19013_001")
+
+plot(tracts18_income[,4])
 
 # population
-# to be filled 
+tracts18_pop <-
+  tracts18 %>%
+  filter(variable == "B01003_001")
 
-# GRad/Prof Degree
-# BC: should we use bachelor degree instead of...?
-# to be filled
+plot(tracts18_pop[,4])
+
+# Bachelor's
+tracts18_bach <-
+  tracts18 %>%
+  filter(variable == "B06009_005")
+
+plot(tracts18_bach[,4])
 
 # No. Vehicle (home owner)
-# to be filled
+tracts18_noCarOwner <-
+  tracts18 %>%
+  filter(variable == "B25044_003")
+
+plot(tracts18_noCarOwner[,4])
 
 # No. Vehicle (renter)
-# to be filled
+tracts18_noCarRenter <-
+  tracts18 %>%
+  filter(variable == "B25044_010")
+
+plot(tracts18_noCarRenter[,4])
 
 ##############################long form to wide form###############################
-tracts10 <- 
-  tracts10 %>%
+tracts18 <- 
+  tracts18 %>%
   dplyr::select( -NAME, -moe) %>%
   spread(variable, estimate) %>%
   dplyr::select(-geometry) %>%
   rename(Rent = B25058_001, 
          MedHHInc = B19013_001,
          Population = B01003_001, 
-         GPDegree = B20004_006,
+         Bachelors = B06009_005,
          Vehicle_hmow = B25044_003, 
          Vehicle_hmre = B25044_010)
 
