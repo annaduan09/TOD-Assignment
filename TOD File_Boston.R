@@ -77,6 +77,8 @@ tracts10 <-
                 year=2010, state=25, county=025, geometry=T) %>% 
   st_transform('ESRI:102686')
 
+# Spread Table
+
 # Sample plot
 plot(tracts10)
 
