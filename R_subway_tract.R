@@ -182,9 +182,15 @@ tracts10 <-
 
 st_drop_geometry(tracts10)[1:3,]
 ###################################mutate##########################################
-#I don't think we need to create any new variables here. But I just save the space
-#AD: I think we should normalize bachelor by adults, and add carless home owners 
-# and renters and divide that by total households
+tracts10 <- 
+  tracts10 %>%
+  mutate(pctBach = ifelse(Population > 0, Bachelor / Population, 0),
+         pctNoVehicle = ifelse(households_hmow + households_hmre > 0, 
+                               ((NoVehicle_hmow + NoVehicle_hmre) / 
+                                  (households_hmow + households_hmre), 0)),
+         year = "2010") %>%
+  dplyr::select(-Population,-households_hmow,-households_hmre,-NoVehicle_hmow,-NoVehicle_hmre)
+
 
 
 ###############################plot data 19########################################
