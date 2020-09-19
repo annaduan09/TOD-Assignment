@@ -268,7 +268,7 @@ st_drop_geometry(tracts10)[1:3,]
 
 #################################transit data######################################
 ##################################################################################
-mbta_node <- st_transform(st_crs(tracts10))
+#mbta_node <- st_transform(st_crs(tracts10))
 #  rbind(
 #    st_read("https://docs.digital.mass.gov/api/3/action/package_show?id=89711539-cf8a-4386-bf91-a1110c541da0") %>% 
 #      mutate(LINE = "SILVER") %>%
@@ -286,19 +286,151 @@ mbta_node <- st_transform(st_crs(tracts10))
 #      mutate(LINE ="BLUE") %>%#1904
 #      select(STATION, LINE)) %>% 
 
-
-mbta_node_sf <- st_as_sf(mbta_node, coords = c("Lon", "Lat"), crs = 4326) %>%
-  st_transform('ESRI:102728')
+mbta_node <- st_read("E:/Upenn/CPLN508/TOD-Assignment/mbta_node.geojson") %>% st_transform(st_crs(tracts17)) 
 
 ggplot() + 
-  geom_sf(data=st_union(tracts10)) +
+  geom_sf(data=st_union(tracts18)) +
   geom_sf(data=mbta_node, aes(colour = line), show.legend = "point", size= 2) +
-  scale_colour_manual(values = c("orange","blue")) +
-  labs(title="Subway Stops", subtitle="Boston, MA", caption="Figure 2.5") +
+  scale_colour_manual(values = c("orange","blue","red","green","purple","gray","yellow","pink","dark blue","dark green")) +
+  labs(title="Subway Stops", subtitle="Boston, MA", caption="Figure 1.1") +
   mapTheme()
  
+####################################set buffer##################################
+mbtaBuffers <- 
+  rbind(
+    st_buffer(mbta_node, 2640) %>% #in feet
+      mutate(Legend = "Buffer") %>%
+      dplyr::select(Legend),
+    st_union(st_buffer(mbta_node, 2640)) %>% #union buffer
+      st_sf() %>%
+      mutate(Legend = "Unioned Buffer"))
 
-###########################muti-ring buffer#######################################
+
+#The resulting 'small multiple' map is only possible when data is organized in long form.
+ggplot() +
+  geom_sf(data=mbtaBuffers) +
+  geom_sf(data=mbta_node, show.legend = "point") +
+  facet_wrap(~Legend) +  #wrap by years and make small multiple plots
+  labs(caption = "Figure 1.2") +
+  mapTheme()
+
+#############################spatial operation##################################
+
+selectCentroids <-
+  st_centroid(tracts18)[buffer,] %>%
+  st_drop_geometry() %>%
+  left_join(dplyr::select(tracts18, GEOID)) %>%
+  st_sf() %>%
+  dplyr::select(TotalPop) %>%
+  mutate(Selection_Type = "Select by Centroids")
+
+
+
+###########################indicator map########################################
+
+allTracts.group <- 
+  rbind(
+    st_centroid(allTracts)[buffer,] %>%
+      st_drop_geometry() %>%
+      left_join(allTracts) %>%
+      st_sf() %>%
+      mutate(TOD = "TOD"),
+    st_centroid(allTracts)[buffer, op = st_disjoint] %>%
+      st_drop_geometry() %>%
+      left_join(allTracts) %>%
+      st_sf() %>%
+      mutate(TOD = "Non-TOD")) %>%
+  mutate(MedRent.inf = ifelse(year == "2009", MedRent * 1.14, MedRent))
+#need to change here!!!
+
+
+###########################TOD Indicator Tables################################
+
+allTracts.Summary <- 
+  st_drop_geometry(allTracts.group) %>%
+  group_by(year, TOD) %>%
+  summarize(Rent = mean(MedRent, na.rm = T),
+            Population = mean(TotalPop, na.rm = T),
+            Percent_White = mean(pctWhite, na.rm = T),
+            Percent_Bach = mean(pctBachelors, na.rm = T),
+            Percent_Poverty = mean(pctPoverty, na.rm = T))
+
+kable(allTracts.Summary) %>%
+  kable_styling() %>%
+  footnote(general_title = "\n",
+           general = "Table 2.2")
+
+##############to be revised below###################
+####################################################
+#####################################################
+
+# Let's make some comparisons and speculate about the willingness to pay
+# and demographics in these areas 2009-2017 (see the 2000 data in the text too)
+
+allTracts.Summary %>%
+  unite(year.TOD, year, TOD, sep = ": ", remove = T) %>%
+  gather(Variable, Value, -year.TOD) %>%
+  mutate(Value = round(Value, 2)) %>%
+  spread(year.TOD, Value) %>%
+  kable() %>%
+  kable_styling() %>%
+  footnote(general_title = "\n",
+           general = "Table 2.3")
+
+# --- TOD Indicator Plots ------
+
+# Let's create small multiple plots
+# We use the "gather" command (look this one up please)
+# To go from wide to long
+# Why do we do this??
+# Notice we can "pipe" a ggplot call right into this operation!
+
+allTracts.Summary %>%
+  gather(Variable, Value, -year, -TOD) %>%
+  ggplot(aes(year, Value, fill = TOD)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~Variable, scales = "free", ncol=5) +
+  scale_fill_manual(values = c("#bae4bc", "#0868ac")) +
+  labs(title = "Indicator differences across time and space") +
+  plotTheme() + theme(legend.position="bottom")
+
+# Examining three submarkets
+
+centerCity <-
+  st_intersection(
+    st_buffer(filter(septaStops, Line == "El"), 2640) %>% st_union(),
+    st_buffer(filter(septaStops, Line == "Broad_St"), 2640) %>% st_union()) %>%
+  st_sf() %>%
+  mutate(Submarket = "Center City")
+
+el <-
+  st_buffer(filter(septaStops, Line == "El"), 2640) %>% st_union() %>%
+  st_sf() %>%
+  st_difference(centerCity) %>%
+  mutate(Submarket = "El")
+
+broad.st <-
+  st_buffer(filter(septaStops, Line == "Broad_St"), 2640) %>% st_union() %>%
+  st_sf() %>%
+  st_difference(centerCity) %>%
+  mutate(Submarket = "Broad Street")
+
+threeMarkets <- rbind(el, broad.st, centerCity)
+
+# You can then bind these buffers to tracts and map them or make small multiple plots
+
+allTracts.threeMarkets <-
+  st_join(st_centroid(allTracts), threeMarkets) %>%
+  st_drop_geometry() %>%
+  left_join(allTracts) %>%
+  mutate(Submarket = replace_na(Submarket, "Non-TOD")) %>%
+  st_sf() 
+#spread goes long to wide, gather opposite
+
+
+
+
+#############################multi-ring buffer##################################
 square <-  
   st_sfc(st_polygon(list(cbind(c(0,3,3,0,0),c(0,0,3,3,0))))) %>%
   st_sf()
