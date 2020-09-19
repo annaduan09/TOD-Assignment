@@ -186,10 +186,10 @@ tracts10 <-
   tracts10 %>%
   mutate(pctBach = ifelse(Population > 0, Bachelor / Population, 0),
          pctNoVehicle = ifelse(households_hmow + households_hmre > 0, 
-                               ((NoVehicle_hmow + NoVehicle_hmre) / 
-                                  (households_hmow + households_hmre), 0)),
+                               (NoVehicle_hmow + NoVehicle_hmre) / 
+                                  (households_hmow + households_hmre),0),
          year = "2010") %>%
-  dplyr::select(-Population,-households_hmow,-households_hmre,-NoVehicle_hmow,-NoVehicle_hmre)
+  dplyr::select(-householdshmow,-householdshmre,-geometry)
 
 
 
