@@ -341,6 +341,8 @@ tracts18 <-
          year = "2018") %>%
   dplyr::select(-Households_hmow,-Households_hmre,-NoVehicle_hmow, -NoVehicle_hmre, -Bachelor)
 
+###################################bind 2009 and 2018#############################
+allTracts <- rbind(tracts10,tracts18)
 
 #################################transit data######################################
 ##################################################################################
