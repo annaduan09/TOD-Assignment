@@ -12,6 +12,90 @@ library(kableExtra)
 options(scipen=999)
 options(tigris_class = "sf")
 
+######################DEFINE MULTIPLERINGBUFFER FUNCTION########################
+
+multipleRingBuffer <- function(inputPolygon, maxDistance, interval) 
+{
+  #create a list of distances that we'll iterate through to create each ring
+  distances <- seq(0, maxDistance, interval)
+  #we'll start with the second value in that list - the first is '0'
+  distancesCounter <- 2
+  #total number of rings we're going to create
+  numberOfRings <- floor(maxDistance / interval)
+  #a counter of number of rings
+  numberOfRingsCounter <- 1
+  #initialize an otuput data frame (that is not an sf)
+  allRings <- data.frame()
+  
+  #while number of rings  counteris less than the specified nubmer of rings
+  while (numberOfRingsCounter <= numberOfRings) 
+  {
+    #if we're interested in a negative buffer and this is the first buffer
+    #(ie. not distance = '0' in the distances list)
+    if(distances[distancesCounter] < 0 & distancesCounter == 2)
+    {
+      #buffer the input by the first distance
+      buffer1 <- st_buffer(inputPolygon, distances[distancesCounter])
+      #different that buffer from the input polygon to get the first ring
+      buffer1_ <- st_difference(inputPolygon, buffer1)
+      #cast this sf as a polygon geometry type
+      thisRing <- st_cast(buffer1_, "POLYGON")
+      #take the last column which is 'geometry'
+      thisRing <- as.data.frame(thisRing[,ncol(thisRing)])
+      #add a new field, 'distance' so we know how far the distance is for a give ring
+      thisRing$distance <- distances[distancesCounter]
+    }
+    
+    
+    #otherwise, if this is the second or more ring (and a negative buffer)
+    else if(distances[distancesCounter] < 0 & distancesCounter > 2) 
+    {
+      #buffer by a specific distance
+      buffer1 <- st_buffer(inputPolygon, distances[distancesCounter])
+      #create the next smallest buffer
+      buffer2 <- st_buffer(inputPolygon, distances[distancesCounter-1])
+      #This can then be used to difference out a buffer running from 660 to 1320
+      #This works because differencing 1320ft by 660ft = a buffer between 660 & 1320.
+      #bc the area after 660ft in buffer2 = NA.
+      thisRing <- st_difference(buffer2,buffer1)
+      #cast as apolygon
+      thisRing <- st_cast(thisRing, "POLYGON")
+      #get the last field
+      thisRing <- as.data.frame(thisRing$geometry)
+      #create the distance field
+      thisRing$distance <- distances[distancesCounter]
+    }
+    
+    #Otherwise, if its a positive buffer
+    else 
+    {
+      #Create a positive buffer
+      buffer1 <- st_buffer(inputPolygon, distances[distancesCounter])
+      #create a positive buffer that is one distance smaller. So if its the first buffer
+      #distance, buffer1_ will = 0. 
+      buffer1_ <- st_buffer(inputPolygon, distances[distancesCounter-1])
+      #difference the two buffers
+      thisRing <- st_difference(buffer1,buffer1_)
+      #cast as a polygon
+      thisRing <- st_cast(thisRing, "POLYGON")
+      #geometry column as a data frame
+      thisRing <- as.data.frame(thisRing[,ncol(thisRing)])
+      #add teh distance
+      thisRing$distance <- distances[distancesCounter]
+    }  
+    
+    #rbind this ring to the rest of the rings
+    allRings <- rbind(allRings, thisRing)
+    #iterate the distance counter
+    distancesCounter <- distancesCounter + 1
+    #iterate the number of rings counter
+    numberOfRingsCounter <- numberOfRingsCounter + 1
+  }
+  
+  #convert the allRings data frame to an sf data frame
+  allRings <- st_as_sf(allRings)
+}
+
 ############################Map/Plot Formatting#################################
 mapTheme <- function(base_size = 12) {
   theme(
@@ -314,7 +398,16 @@ ggplot() +
   labs(caption = "Figure 1.2") +
   mapTheme()
 
+
+#############################multi-ring buffer##################################
+
+mbtamultibuffers <- multipleRingBuffer(mbtaBuffers, 10, 0.5)
+
+ggplot() + geom_sf(data = mbtamultibuffers, aes(fill = distance))
+
 #############################spatial operation##################################
+
+buffer <- filter(mbtaBuffers, Legend=="Unioned Buffer")
 
 selectCentroids <-
   st_centroid(tracts18)[buffer,] %>%
@@ -323,7 +416,6 @@ selectCentroids <-
   st_sf() %>%
   dplyr::select(TotalPop) %>%
   mutate(Selection_Type = "Select by Centroids")
-
 
 
 ###########################indicator map########################################
@@ -342,7 +434,9 @@ allTracts.group <-
       mutate(TOD = "Non-TOD")) %>%
   mutate(MedRent.inf = ifelse(year == "2009", MedRent * 1.14, MedRent))
 #need to change here!!!
-
+##################
+#################
+##MedRent?
 
 ###########################TOD Indicator Tables################################
 
@@ -360,13 +454,7 @@ kable(allTracts.Summary) %>%
   footnote(general_title = "\n",
            general = "Table 2.2")
 
-##############to be revised below###################
-####################################################
-#####################################################
-
-# Let's make some comparisons and speculate about the willingness to pay
-# and demographics in these areas 2009-2017 (see the 2000 data in the text too)
-
+########change to long form######
 allTracts.Summary %>%
   unite(year.TOD, year, TOD, sep = ": ", remove = T) %>%
   gather(Variable, Value, -year.TOD) %>%
@@ -377,50 +465,66 @@ allTracts.Summary %>%
   footnote(general_title = "\n",
            general = "Table 2.3")
 
-# --- TOD Indicator Plots ------
 
-# Let's create small multiple plots
-# We use the "gather" command (look this one up please)
-# To go from wide to long
-# Why do we do this??
-# Notice we can "pipe" a ggplot call right into this operation!
+###########################TOD Indicator Plots##################################
 
 allTracts.Summary %>%
   gather(Variable, Value, -year, -TOD) %>%
   ggplot(aes(year, Value, fill = TOD)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  facet_wrap(~Variable, scales = "free", ncol=5) +
-  scale_fill_manual(values = c("#bae4bc", "#0868ac")) +
-  labs(title = "Indicator differences across time and space") +
-  plotTheme() + theme(legend.position="bottom")
+    geom_bar(stat = "identity", position = "dodge") +
+    facet_wrap(~Variable, scales = "free", ncol=5) +
+    scale_fill_manual(values = c("#bae4bc", "#0868ac")) +
+    labs(title = "Indicator differences across time and space") +
+    plotTheme() + theme(legend.position="bottom")
 
-# Examining three submarkets
+# Examining six submarkets
 
-centerCity <-
+Downtown <-
   st_intersection(
-    st_buffer(filter(septaStops, Line == "El"), 2640) %>% st_union(),
-    st_buffer(filter(septaStops, Line == "Broad_St"), 2640) %>% st_union()) %>%
+    st_buffer(filter(mbta_node, line == "SILVER"), 2640) %>% st_union(),
+    st_buffer(filter(mbta_node, line == "RED"&"GREEN/RED"&"ORANGE/RED"), 2640) %>% st_union(),
+    st_buffer(filter(mbta_node, line == "GREEN"&"GREEN/RED"&"GREEN/ORANGE"&"BLUE/GREEN"), 2640) %>% st_union(),
+    st_buffer(filter(mbta_node, line == "ORANGE"&"ORANGE/RED"&"BLUE/ORANGE"), 2640) %>% st_union(),
+    st_buffer(filter(mbta_node, line == "BLUE"&"BLUE/GREEN"&"BLUE/ORANGE"), 2640) %>% st_union()) %>%
   st_sf() %>%
-  mutate(Submarket = "Center City")
+  mutate(Submarket = "Downtown")
 
-el <-
-  st_buffer(filter(septaStops, Line == "El"), 2640) %>% st_union() %>%
+SILVER_LINE <-
+  st_buffer(filter(mbta_node, line == "SILVER"), 2640) %>% st_union() %>%
   st_sf() %>%
-  st_difference(centerCity) %>%
+  st_difference(Downtown) %>%
   mutate(Submarket = "El")
 
-broad.st <-
-  st_buffer(filter(septaStops, Line == "Broad_St"), 2640) %>% st_union() %>%
+RED_LINE <-
+  st_buffer(filter(mbta_node, line == "RED"&"GREEN/RED"&"ORANGE/RED"), 2640) %>% st_union() %>%
   st_sf() %>%
-  st_difference(centerCity) %>%
+  st_difference(Downtown) %>%
   mutate(Submarket = "Broad Street")
 
-threeMarkets <- rbind(el, broad.st, centerCity)
+GREEN_LINE <-
+  st_buffer(filter(mbta_node, line == "GREEN"&"GREEN/RED"&"GREEN/ORANGE"&"BLUE/GREEN"), 2640) %>% st_union() %>%
+  st_sf() %>%
+  st_difference(Downtown) %>%
+  mutate(Submarket = "Broad Street")
+
+ORANGE_LINE <-
+  st_buffer(filter(mbta_node, line == "ORANGE"&"ORANGE/RED"&"BLUE/ORANGE"), 2640) %>% st_union() %>%
+  st_sf() %>%
+  st_difference(Downtown) %>%
+  mutate(Submarket = "Broad Street")
+
+BLUE_LINE <-
+  st_buffer(filter(mbta_node, line == "BLUE"&"BLUE/GREEN"&"BLUE/ORANGE"), 2640) %>% st_union() %>%
+  st_sf() %>%
+  st_difference(Downtown) %>%
+  mutate(Submarket = "Broad Street")
+
+sixMarkets <- rbind(SILVER_LINE, RED_LINE, GREEN_LINE, ORANGE_LINE, BLUE_LINE, Downtown)
 
 # You can then bind these buffers to tracts and map them or make small multiple plots
 
-allTracts.threeMarkets <-
-  st_join(st_centroid(allTracts), threeMarkets) %>%
+allTracts.sixMarkets <-
+  st_join(st_centroid(allTracts), sixMarkets) %>%
   st_drop_geometry() %>%
   left_join(allTracts) %>%
   mutate(Submarket = replace_na(Submarket, "Non-TOD")) %>%
@@ -428,99 +532,5 @@ allTracts.threeMarkets <-
 #spread goes long to wide, gather opposite
 
 
-
-
-#############################multi-ring buffer##################################
-square <-  
-  st_sfc(st_polygon(list(cbind(c(0,3,3,0,0),c(0,0,3,3,0))))) %>%
-  st_sf()
-
-#Run the function:
-  
-  buffers <- multipleRingBuffer(square, 10, 1)
-#Plot the result:
-  
-  ggplot() + geom_sf(data = buffers, aes(fill = distance))
-multipleRingBuffer <- function(inputPolygon, maxDistance, interval) 
-{
-  #create a list of distances that we'll iterate through to create each ring
-  distances <- seq(0, maxDistance, interval)
-  #we'll start with the second value in that list - the first is '0'
-  distancesCounter <- 2
-  #total number of rings we're going to create
-  numberOfRings <- floor(maxDistance / interval)
-  #a counter of number of rings
-  numberOfRingsCounter <- 1
-  #initialize an otuput data frame (that is not an sf)
-  allRings <- data.frame()
-  
-  #while number of rings  counteris less than the specified nubmer of rings
-  while (numberOfRingsCounter <= numberOfRings) 
-  {
-    #if we're interested in a negative buffer and this is the first buffer
-    #(ie. not distance = '0' in the distances list)
-    if(distances[distancesCounter] < 0 & distancesCounter == 2)
-    {
-      #buffer the input by the first distance
-      buffer1 <- st_buffer(inputPolygon, distances[distancesCounter])
-      #different that buffer from the input polygon to get the first ring
-      buffer1_ <- st_difference(inputPolygon, buffer1)
-      #cast this sf as a polygon geometry type
-      thisRing <- st_cast(buffer1_, "POLYGON")
-      #take the last column which is 'geometry'
-      thisRing <- as.data.frame(thisRing[,ncol(thisRing)])
-      #add a new field, 'distance' so we know how far the distance is for a give ring
-      thisRing$distance <- distances[distancesCounter]
-    }
-    
-    
-    #otherwise, if this is the second or more ring (and a negative buffer)
-    else if(distances[distancesCounter] < 0 & distancesCounter > 2) 
-    {
-      #buffer by a specific distance
-      buffer1 <- st_buffer(inputPolygon, distances[distancesCounter])
-      #create the next smallest buffer
-      buffer2 <- st_buffer(inputPolygon, distances[distancesCounter-1])
-      #This can then be used to difference out a buffer running from 660 to 1320
-      #This works because differencing 1320ft by 660ft = a buffer between 660 & 1320.
-      #bc the area after 660ft in buffer2 = NA.
-      thisRing <- st_difference(buffer2,buffer1)
-      #cast as apolygon
-      thisRing <- st_cast(thisRing, "POLYGON")
-      #get the last field
-      thisRing <- as.data.frame(thisRing$geometry)
-      #create the distance field
-      thisRing$distance <- distances[distancesCounter]
-    }
-    
-    #Otherwise, if its a positive buffer
-    else 
-    {
-      #Create a positive buffer
-      buffer1 <- st_buffer(inputPolygon, distances[distancesCounter])
-      #create a positive buffer that is one distance smaller. So if its the first buffer
-      #distance, buffer1_ will = 0. 
-      buffer1_ <- st_buffer(inputPolygon, distances[distancesCounter-1])
-      #difference the two buffers
-      thisRing <- st_difference(buffer1,buffer1_)
-      #cast as a polygon
-      thisRing <- st_cast(thisRing, "POLYGON")
-      #geometry column as a data frame
-      thisRing <- as.data.frame(thisRing[,ncol(thisRing)])
-      #add teh distance
-      thisRing$distance <- distances[distancesCounter]
-    }  
-    
-    #rbind this ring to the rest of the rings
-    allRings <- rbind(allRings, thisRing)
-    #iterate the distance counter
-    distancesCounter <- distancesCounter + 1
-    #iterate the number of rings counter
-    numberOfRingsCounter <- numberOfRingsCounter + 1
-  }
-  
-  #convert the allRings data frame to an sf data frame
-  allRings <- st_as_sf(allRings)
-}
 
 
