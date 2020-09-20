@@ -192,7 +192,6 @@ tracts10 <-
   dplyr::select(-householdshmow,-householdshmre,-geometry)
 
 
-
 ###############################plot data 19########################################
 ###################################################################################
 ##BC: I haven't changed the year below
@@ -204,7 +203,7 @@ tracts18_rent <-
 
 plot(tracts18_rent[,4])
 
-RentPlot <- 
+PlotRent <- 
   ggplot() +
   geom_sf(data = tracts18_rent, aes(fill = q5(estimate))) +
   scale_fill_manual(values = palette5,
@@ -256,14 +255,22 @@ tracts18 <-
   rename(Rent = B25058_001, 
          MedHHInc = B19013_001,
          Population = B01003_001, 
-         Bachelors = B06009_005,
-         Vehicle_hmow = B25044_003, 
-         Vehicle_hmre = B25044_010)
+         Bachelor = B06009_005,
+         NoVehicle_hmow = B25044_003, 
+         NoVehicle_hmre = B25044_010,
+         households_hmow = B07013_002,
+         households_hmre = B07013_003)
 
 st_drop_geometry(tracts10)[1:3,]
 ###################################mutate##########################################
-#I don't think we need to create any new variables here. But I just save the space
-
+tracts18 <- 
+  tracts18 %>%
+  mutate(pctBach = ifelse(Population > 0, Bachelor / Population, 0),
+         pctNoVehicle = ifelse((households_hmow + households_hmre) > 0, 
+                               (NoVehicle_hmow + NoVehicle_hmre) / 
+                                 (households_hmow + households_hmre),0),
+         year = "2018") %>%
+  dplyr::select(-householdshmow,-householdshmre,-geometry)
 
 
 #################################transit data######################################
