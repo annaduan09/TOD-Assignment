@@ -365,7 +365,10 @@ allTracts <- rbind(tracts10,tracts18)
 #      select(STATION, LINE)) %>% 
 
 mbta_node <- st_read("/Users/annaduan/Documents/GitHub/TOD-Assignment/mbta_node.geojson") %>% st_transform(st_crs(tracts17)) 
+mbta_node <- 
+  subset(mbta_node, geometry %in% allTracts)
 
+# Station plot
 ggplot() + 
   geom_sf(data=st_union(tracts18)) +
   geom_sf(data=mbta_node, aes(colour = line), show.legend = "point", size= 2) +
@@ -373,6 +376,15 @@ ggplot() +
   labs(title="Subway Stops", subtitle="Boston, MA", caption="Figure 1.1") +
   mapTheme()
  
+#The resulting 'small multiple' map is only possible when data is organized in long form.
+ggplot() +
+  geom_sf(data=st_union(tracts10)) +
+  geom_sf(data=mbtaBuffers) +
+  geom_sf(data=mbta_node, show.legend = "point") +
+  facet_wrap(~Legend) +  #wrap by years and make small multiple plots
+  labs(caption = "Figure 1.2") +
+  mapTheme()
+
 ####################################set buffer##################################
 mbtaBuffers <- 
   rbind(
@@ -382,15 +394,6 @@ mbtaBuffers <-
     st_union(st_buffer(mbta_node, 2640)) %>% #union buffer
       st_sf() %>%
       mutate(Legend = "Unioned Buffer"))
-
-
-#The resulting 'small multiple' map is only possible when data is organized in long form.
-ggplot() +
-  geom_sf(data=mbtaBuffers) +
-  geom_sf(data=mbta_node, show.legend = "point") +
-  facet_wrap(~Legend) +  #wrap by years and make small multiple plots
-  labs(caption = "Figure 1.2") +
-  mapTheme()
 
 
 #############################multi-ring buffer##################################
