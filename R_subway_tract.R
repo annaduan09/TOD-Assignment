@@ -445,16 +445,16 @@ ggplot() +
   mapTheme()
 #############################multi-ring buffer##################################
 
-bostonMultiBuffer <- multipleRingBuffer(bostonBuffers, 10, 0.5)
+multiBuffers <- multipleRingBuffer(boston_stations, 10, 1)
 
-ggplot() + geom_sf(data = bostonMultiBuffer, aes(fill = distance))
+ggplot() + geom_sf(data = multiBuffers, aes(fill = distance))
 
 #############################spatial operation##################################
 
-buffer <- filter(mbtaBuffers, Legend=="Unioned Buffer")
+buffer <- filter(bostonBuffers, Legend=="Unioned Buffer")
 
 selectCentroids <-
-  st_centroid(tracts18)[buffer,] %>%
+  st_centroid(allTractsBOS)[buffer,] %>%
   st_drop_geometry() %>%
   left_join(dplyr::select(tracts18, GEOID)) %>%
   st_sf() %>%
