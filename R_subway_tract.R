@@ -157,22 +157,17 @@ palette5 <- c("#f0f9e8","#bae4bc","#7bccc4","#43a2ca","#0868ac")
 # Input API key
 census_api_key("d9ebfd04caa0138647fbacd94c657cdecbf705e9", install = TRUE, overwrite = TRUE)
 
-#BC mine: 0e3cc3910723434685f1e4c5df2ac519c0790ba5
 rm(sub_16_5, sub_17_5)
-# Tracts, Median Rent, MHHINC, Population, Bachelor's, No. Vehicle (home owner, renter), Households (owner, renter)
-## projection (NAD 1983 StatePlane Massachusetts Mainland FIPS 2001 Feet)
+# Median Rent, MHHINC, Population, Bachelor's, No. Vehicle (home owner, renter), Households (owner, renter)
+## projection: (NAD 1983 StatePlane Massachusetts Mainland FIPS 2001 Feet)
 tracts10 <-  
   get_acs(geography = "tract", variables = c("B25058_001E", "B19013_001E", "B01003_001E", "B06009_005E", 
                                              "B25044_003E", "B25044_010E", "B07013_002E", "B07013_003E"), 
           year=2010, state=25, county=025, geometry=T) %>% 
   st_transform('ESRI:102686')
 
-#BC not sure if we do the year 2012 and 2019 or?
-#AD the professor said to do 2010 and 2019
-
 #BC https://en.wikipedia.org/wiki/MBTA_subway 
 #BC I think our focus will be mainly on silver line, which started on 2002
-#AD Sounds good
 
 tracts18 <-  
   get_acs(geography = "tract", variables = c("B25058_001E", "B19013_001E", "B01003_001E", "B06009_005E", 
@@ -191,14 +186,6 @@ tracts10_rent <-
 
 plot(tracts10_rent[,4])
 
-RentPlot <- 
-  ggplot() +
-  geom_sf(data = tracts10_rent, aes(fill = q5(estimate))) +
-  scale_fill_manual(values = palette5,
-                    labels = qBr(tracts10_rent, "estimate"),
-                    name = "Rent\n(Quintile Breaks)") +
-  labs(title = "Median Contract Rent", subtitle = "Boston; 2010") +
-  mapTheme() + theme(plot.title = element_text(size=22))
 # household income
 tracts10_income <-
   tracts10 %>%
@@ -261,25 +248,23 @@ tracts10 <-
          Bachelor = B06009_005,
          NoVehicle_hmow = B25044_003, 
          NoVehicle_hmre = B25044_010,
-         households_hmow = B07013_002,
-         households_hmre = B07013_003)
+         Households_hmow = B07013_002,
+         Households_hmre = B07013_003)
 
 st_drop_geometry(tracts10)[1:3,]
 ###################################mutate##########################################
 tracts10 <- 
   tracts10 %>%
   mutate(pctBach = ifelse(Population > 0, Bachelor / Population, 0),
-         pctNoVehicle = ifelse(households_hmow + households_hmre > 0, 
+         pctNoVehicle = ifelse(Households_hmow + Households_hmre > 0, 
                                (NoVehicle_hmow + NoVehicle_hmre) / 
-                                  (households_hmow + households_hmre),0),
+                                  (Households_hmow + Households_hmre),0),
          year = "2010") %>%
-  dplyr::select(-householdshmow,-householdshmre,-geometry)
+  dplyr::select(-Households_hmow,-Households_hmre,-NoVehicle_hmow, -NoVehicle_hmre, -Bachelor)
 
 
 ###############################plot data 19########################################
 ###################################################################################
-##BC: I haven't changed the year below
-##AD: I changed it
 # rent
 tracts18_rent <-
   tracts18 %>%
@@ -342,19 +327,19 @@ tracts18 <-
          Bachelor = B06009_005,
          NoVehicle_hmow = B25044_003, 
          NoVehicle_hmre = B25044_010,
-         households_hmow = B07013_002,
-         households_hmre = B07013_003)
+         Households_hmow = B07013_002,
+         Households_hmre = B07013_003)
 
 st_drop_geometry(tracts10)[1:3,]
 ###################################mutate##########################################
 tracts18 <- 
   tracts18 %>%
   mutate(pctBach = ifelse(Population > 0, Bachelor / Population, 0),
-         pctNoVehicle = ifelse(households_hmow + households_hmre) > 0, 
+         pctNoVehicle = ifelse(Households_hmow + Households_hmre > 0, 
                                (NoVehicle_hmow + NoVehicle_hmre) / 
-                                 (households_hmow + households_hmre),0),
+                                 (Households_hmow + Households_hmre),0),
          year = "2018") %>%
-  dplyr::select(-householdshmow,-householdshmre,-geometry)
+  dplyr::select(-Households_hmow,-Households_hmre,-NoVehicle_hmow, -NoVehicle_hmre, -Bachelor)
 
 
 #################################transit data######################################
@@ -539,5 +524,7 @@ allTracts.sixMarkets <-
 #spread goes long to wide, gather opposite
 
 
+
+####################################Crime Data############################################
 
 
