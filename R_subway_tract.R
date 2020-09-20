@@ -364,7 +364,7 @@ allTracts <- rbind(tracts10,tracts18)
 #      mutate(LINE ="BLUE") %>%#1904
 #      select(STATION, LINE)) %>% 
 
-mbta_node <- st_read("E:/Upenn/CPLN508/TOD-Assignment/mbta_node.geojson") %>% st_transform(st_crs(tracts17)) 
+mbta_node <- st_read("/Users/annaduan/Documents/GitHub/TOD-Assignment/mbta_node.geojson") %>% st_transform(st_crs(tracts17)) 
 
 ggplot() + 
   geom_sf(data=st_union(tracts18)) +
