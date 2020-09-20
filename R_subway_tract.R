@@ -344,6 +344,43 @@ tracts18 <-
 ###################################bind 2009 and 2018#############################
 allTracts <- rbind(tracts10,tracts18)
 
+##################################take out non-Boston tracts######################
+BOSTracts10 <- c("25025010405", "25025010404", "25025010801", "25025010702", "25025010204", 
+"25025010802", "25025010104", "25025000703", "25025000504", "25025000704", "25025010103", 
+"25025000803", "25025980300", "25025120201", "25025120104", "25025110607", "25025000302", 
+"25025000301", "25025140400", "25025140300", "25025140201", "25025140202", "25025140102", 
+"25025130402", "25025130300", "25025130200", "25025130100", "25025120700", "25025120600", 
+"25025120500", "25025120400", "25025110601", "25025110502", "25025110501", "25025110401", 
+"25025101102", "25025101101", "25025101002", "25025101001", "25025100900", "25025100800", 
+"25025100601", "25025100500", "25025100400", "25025100300", "25025981300", "25025981201", 
+"25025990101", "25025981501", "25025981700", "25025981800", "25025100200", "25025100100", 
+"25025092400", "25025092300", "25025092200", "25025092000", "25025091900", "25025091800", 
+"25025091700", "25025091600", "25025981100", "25025140105", "25025980700", "25025120105", 
+"25025120301", "25025071201", "25025091001", "25025091500", "25025091400", "25025091300", 
+"25025091200", "25025091100", "25025090700", "25025090600", "25025090400", "25025090300", 
+"25025090200", "25025980101", "25025040801", "25025010203", "25025110403", "25025110201", 
+"25025981000", "25025090100", "25025082100", "25025082000", "25025081900", "25025081800", 
+"25025081700", "25025081500", "25025081400", "25025081300", "25025110103", "25025110301", 
+"25025140106", "25025010701", "25025010408", "25025000503", "25025081200", "25025081100", 
+"25025080900", "25025080801", "25025080601", "25025080500", "25025080401", "25025080300", 
+"25025071101", "25025070900", "25025140107", "25025130404", "25025130406", "25025120103", 
+"25025100700", "25025100603", "25025092101", "25025061101", "25025070800", "25025070700", 
+"25025070600", "25025070500", "25025070300", "25025070200", "25025070101", "25025061200", 
+"25025061000", "25025060800", "25025060700", "25025080100", "25025060301", "25025090901", 
+"25025060101", "25025981502", "25025060600", "25025060400", "25025060200", "25025051200", 
+"25025050700", "25025050600", "25025050500", "25025050400", "25025050300", "25025050200", 
+"25025040300", "25025040200", "25025030500", "25025981600", "25025051101", "25025051000", 
+"25025030400", "25025030300", "25025030200", "25025030100", "25025020200", "25025010600", 
+"25025010500", "25025010300", "25025000802", "25025000701", "25025050101", "25025050901", 
+"25025060501", "25025981202", "25025040100", "25025040600", "25025000602", "25025000601", 
+"25025000502", "25025000402", "25025000401", "25025000202", "25025000201", "25025040401", 
+"25025020303", "25025070402", "25025020302", "25025020301", "25025020101", "25025081001", 
+"25025010403", "25025000100")
+
+allTractsBOS <- 
+  subset(allTracts, GEOID %in% BOSTracts10)
+
+
 #################################transit data######################################
 ##################################################################################
 #mbta_node <- st_transform(st_crs(tracts10))
@@ -364,43 +401,53 @@ allTracts <- rbind(tracts10,tracts18)
 #      mutate(LINE ="BLUE") %>%#1904
 #      select(STATION, LINE)) %>% 
 
-mbta_node <- st_read("/Users/annaduan/Documents/GitHub/TOD-Assignment/mbta_node.geojson") %>% st_transform(st_crs(tracts17)) 
-mbta_node <- 
-  subset(mbta_node, geometry %in% allTracts)
+mbta_node <- st_read("/Users/annaduan/Documents/GitHub/TOD-Assignment/mbta_node.geojson") %>% st_transform(st_crs(allTractsBOS)) 
+
+############################################Exclude stops outside Boston############################################
+boston_stations <-
+  mbta_node %>%
+  filter(station != "Alewife" & station != "Assembly" & station != "Beachmont" & station !=  "Beaconsfield" & station !=  "Bellingham Square" & station !=  "Box District" & station !=  
+         "Braintree" & station !=  "Brandon Hall" & station !=  "Brookline Village" & station !=  "Brookline Hills" & station !=  "Capen Street" & station !=  "Central" & station !=  
+         "Central Avenue" & station !=  "Chelsea" & station !=  "Chestnut Hill" & station !=  "Coolidge Corner" & station !=  "Davis" & station !=  "Dean Road" & station !=  "Eastern Avenue" & station !=  
+         "Eliot" & station !=  "Englewood Avenue" & station !=  "Fairbanks Street" & station !=  "Harvard" & station !=  "Hawes Street" & station !=  "Kendall/MIT" & station !=  "Kent Street" & station !=  "Longwood" & station !=  
+         "Malden Center" & station !=  "Milton" & station !=  "Newton Centre" & station !=  "Newton Highlands" & station !=  "North Quincy" & station !=  "Oak Grove" & station !=  "Porter" & station !=  
+         "Quincy Adams" & station !=  "Quincy Center" & station !=  "Revere Beach" & station !=  "Riverside" & station !=  "Saint Marys Street" & station !=  "Saint Paul Street" & station !=  
+         "Summit Avenue" & station !=  "Tappan Street" & station !=  "Valley Road" & station !=  "Waban" & station !=  "Washington Square" & station !=  "Wellington" & station !=  "Wollaston" & station !=  
+         "Wonderland" & station !=  "Woodland" & station !=  "Bellingham Sq"  & station !=  "Eastern Ave"  & station !=  "Brandon Hall" & station != "Summit Ave/Winchester St" & station != "Lechmere")
 
 # Station plot
 ggplot() + 
-  geom_sf(data=st_union(tracts18)) +
-  geom_sf(data=mbta_node, aes(colour = line), show.legend = "point", size= 2) +
+  geom_sf(data=st_union(allTractsBOS)) +
+  geom_sf(data=boston_stations, aes(colour = line), show.legend = "point", size= 2) +
   scale_colour_manual(values = c("orange","blue","red","green","purple","gray","yellow","pink","dark blue","dark green")) +
   labs(title="Subway Stops", subtitle="Boston, MA", caption="Figure 1.1") +
   mapTheme()
  
-#The resulting 'small multiple' map is only possible when data is organized in long form.
-ggplot() +
-  geom_sf(data=st_union(tracts10)) +
-  geom_sf(data=mbtaBuffers) +
-  geom_sf(data=mbta_node, show.legend = "point") +
-  facet_wrap(~Legend) +  #wrap by years and make small multiple plots
-  labs(caption = "Figure 1.2") +
-  mapTheme()
+
 
 ####################################set buffer##################################
-mbtaBuffers <- 
+bostonBuffers <- 
   rbind(
-    st_buffer(mbta_node, 2640) %>% #in feet
+    st_buffer(boston_stations, 2640) %>% #in feet
       mutate(Legend = "Buffer") %>%
       dplyr::select(Legend),
-    st_union(st_buffer(mbta_node, 2640)) %>% #union buffer
+    st_union(st_buffer(boston_stations, 2640)) %>% #union buffer
       st_sf() %>%
       mutate(Legend = "Unioned Buffer"))
 
-
+#The resulting 'small multiple' map is only possible when data is organized in long form.
+ggplot() +
+  geom_sf(data=st_union(allTractsBOS)) +
+  geom_sf(data=bostonBuffers) +
+  geom_sf(data=boston_stations, show.legend = "point") +
+  facet_wrap(~Legend) +  #wrap by years and make small multiple plots
+  labs(caption = "Figure 1.2") +
+  mapTheme()
 #############################multi-ring buffer##################################
 
-mbtamultibuffers <- multipleRingBuffer(mbtaBuffers, 10, 0.5)
+bostonMultiBuffer <- multipleRingBuffer(bostonBuffers, 10, 0.5)
 
-ggplot() + geom_sf(data = mbtamultibuffers, aes(fill = distance))
+ggplot() + geom_sf(data = bostonMultiBuffer, aes(fill = distance))
 
 #############################spatial operation##################################
 
