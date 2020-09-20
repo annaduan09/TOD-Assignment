@@ -4,6 +4,18 @@ author: "Anna Duan, Bingchu Chen"
 date: "9/20/2020"
 output: html_document
 ---
+## requirements
+Provide a brief motivation at the beginning, annotate each visualization appropriately, and then provide brief policy-relevant conclusions.
+
+Do households value transit-rich neighborhoods compared to others? How certain can you be about your conclusions given some of the spatial biases we've discussed? 
+
+1.Show your data wrangling work.
+2.Four small-multiple (2000 & 2017+) visualizations comparing four selected Census variables across time and space (TOD vs. non-TOD).
+3.One grouped bar plot making these same comparisons.
+4.One table making these same comparisons.
+5.Create two graduated symbol maps of population and rent within 0.5 mile of each transit station. Google for more 6.information, but a graduate symbol map represents quantities for each transit station proportionally.
+7.Create a geom_line plot that shows mean rent as a function of distance to subway stations (Figure x.x.x). To do this you will need to use the multipleRingBuffer function in the ppaR package.
+8.Download and wrangle point-level crime data (pick a crime type). What is the relationship between crime, transit access and rents
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
