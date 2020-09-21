@@ -556,59 +556,96 @@ allTracts.Summary %>%
     plotTheme() + theme(legend.position="bottom")
 
 # Examining six submarkets
-
-Downtown <-
+## let's do two intersections for simplicity's sake - Downtown crossing and State stations
+### these two spots have the most intersecting lines + are at the center of downtown region
+#State Station Intersection
+downtown <-
   st_intersection(
-    st_buffer(filter(mbta_node, line == "SILVER"), 2640) %>% st_union(),
-    st_buffer(filter(mbta_node, line == "RED"&"GREEN/RED"&"ORANGE/RED"), 2640) %>% st_union(),
-    st_buffer(filter(mbta_node, line == "GREEN"&"GREEN/RED"&"GREEN/ORANGE"&"BLUE/GREEN"), 2640) %>% st_union(),
-    st_buffer(filter(mbta_node, line == "ORANGE"&"ORANGE/RED"&"BLUE/ORANGE"), 2640) %>% st_union(),
-    st_buffer(filter(mbta_node, line == "BLUE"&"BLUE/GREEN"&"BLUE/ORANGE"), 2640) %>% st_union()) %>%
+    st_buffer(filter(mbtaNode, line == "BLUE"), 2640) %>% st_union(),
+    st_buffer(filter(mbtaNode, line == "ORANGE"), 2640) %>% st_union(),
+    st_buffer(filter(mbtaNode, line == "RED"), 2640) %>% st_union(),
+    st_buffer(filter(mbtaNode, line == "SILVER"), 2640) %>% st_union(),
+    st_buffer(filter(mbtaNode, line == "GREEN"), 2640) %>% st_union()) %>%
   st_sf() %>%
   mutate(Submarket = "Downtown")
 
-SILVER_LINE <-
+blue <-
+  st_buffer(filter(mbta_node, line == "BLUE"), 2640) %>% st_union() %>%
+  st_sf() %>%
+  st_difference(downtown) %>%
+  mutate(Submarket = "Blue")
+
+orange <-
+  st_buffer(filter(mbta_node, line == "ORANGE"), 2640) %>% st_union() %>%
+  st_sf() %>%
+  st_difference(downtown) %>%
+  mutate(Submarket = "Orange")
+
+red <-
+  st_buffer(filter(mbta_node, line == "RED"), 2640) %>% st_union() %>%
+  st_sf() %>%
+  st_difference(downtown) %>%
+  mutate(Submarket = "Red")
+
+silver <-
   st_buffer(filter(mbta_node, line == "SILVER"), 2640) %>% st_union() %>%
   st_sf() %>%
-  st_difference(Downtown) %>%
-  mutate(Submarket = "El")
+  st_difference(downtown) %>%
+  mutate(Submarket = "Silver")
 
-RED_LINE <-
-  st_buffer(filter(mbta_node, line == "RED"&"GREEN/RED"&"ORANGE/RED"), 2640) %>% st_union() %>%
+green <-
+  st_buffer(filter(mbta_node, line == "GREEN"), 2640) %>% st_union() %>%
   st_sf() %>%
-  st_difference(Downtown) %>%
-  mutate(Submarket = "Broad Street")
+  st_difference(downtown) %>%
+  mutate(Submarket = "Green")
 
-GREEN_LINE <-
-  st_buffer(filter(mbta_node, line == "GREEN"&"GREEN/RED"&"GREEN/ORANGE"&"BLUE/GREEN"), 2640) %>% st_union() %>%
-  st_sf() %>%
-  st_difference(Downtown) %>%
-  mutate(Submarket = "Broad Street")
-
-ORANGE_LINE <-
-  st_buffer(filter(mbta_node, line == "ORANGE"&"ORANGE/RED"&"BLUE/ORANGE"), 2640) %>% st_union() %>%
-  st_sf() %>%
-  st_difference(Downtown) %>%
-  mutate(Submarket = "Broad Street")
-
-BLUE_LINE <-
-  st_buffer(filter(mbta_node, line == "BLUE"&"BLUE/GREEN"&"BLUE/ORANGE"), 2640) %>% st_union() %>%
-  st_sf() %>%
-  st_difference(Downtown) %>%
-  mutate(Submarket = "Broad Street")
-
-sixMarkets <- rbind(SILVER_LINE, RED_LINE, GREEN_LINE, ORANGE_LINE, BLUE_LINE, Downtown)
+sixMarkets <- rbind(silver, red, green, orange, blue, downtown)
 
 # You can then bind these buffers to tracts and map them or make small multiple plots
 
 allTracts.sixMarkets <-
-  st_join(st_centroid(allTracts), sixMarkets) %>%
+  st_join(st_centroid(allTractsBos), sixMarkets) %>%
   st_drop_geometry() %>%
-  left_join(allTracts) %>%
+  left_join(allTractsBos) %>%
   mutate(Submarket = replace_na(Submarket, "Non-TOD")) %>%
   st_sf() 
 #spread goes long to wide, gather opposite
+allTracts.sixMarkets.Summary <- 
+  st_drop_geometry(allTracts.group) %>%
+  group_by(year, TOD) %>%
+  summarize(Rent = mean(Rent, na.rm = T),
+            Population = mean(Population, na.rm = T),
+            pctBach = mean(pctBach, na.rm = T),
+            pctNoVehicle = mean(pctNoVehicle, na.rm = T),
+            MedHHInc = mean(MedHHInc, na.rm = T))
 
+kable(allTracts.Summary) %>%
+  kable_styling() %>%
+  footnote(general_title = "\n",
+           general = "Table 2.3")
+
+########change to long form######
+allTracts.sixMarkets.Summary %>%
+  unite(year.TOD, year, TOD, sep = ": ", remove = T) %>%
+  gather(Variable, Value, -year.TOD) %>%
+  mutate(Value = round(Value, 2)) %>%
+  spread(year.TOD, Value) %>%
+  kable() %>%
+  kable_styling() %>%
+  footnote(general_title = "\n",
+           general = "Table 2.3")
+
+
+###########################TOD Indicator Plots##################################
+
+allTracts.sixMarkets.Summary %>%
+  gather(Variable, Value, -year, -TOD) %>%
+  ggplot(aes(year, Value, fill = TOD)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~Variable, scales = "free", ncol=5) +
+  scale_fill_manual(values = c("#bae4bc", "#0868ac")) +
+  labs(title = "Indicator differences across time and space") +
+  plotTheme() + theme(legend.position="bottom")
 
 
 ####################################Crime Data############################################
