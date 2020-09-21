@@ -472,14 +472,48 @@ allTracts.group <-
       mutate(TOD = "Non-TOD")) %>%
   mutate(Rent.inf = ifelse(year == "2009", Rent * 1.14, Rent))
 
-#Population Map
+#1: Population Map
 ggplot() +
+  geom_sf(data=st_union(allTracts.group)) +
   geom_sf(data = allTracts.group, aes(fill = q5(Population))) +
   facet_wrap(~TOD + year) + 
   scale_fill_manual(values = palette5,
                     labels = qBr(allTracts.group, "Population"),
                     name = "Population\n(Quintile Breaks)") +
   labs(title = "Total Population", subtitle = "Boston") +
+  mapTheme() + theme(plot.title = element_text(size=18))
+
+#2: Bachelor's Map ### doesn't work yet
+ggplot() +
+  geom_sf(data=st_union(allTracts.group)) +
+  geom_sf(data = allTracts.group, aes(fill = q5(pctBach))) +
+  facet_wrap(~TOD + year) + 
+  scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.group, "Bachelor's"),
+                    name = "Bachelor Degrees\n(Quintile Breaks)") +
+  labs(title = "Bachelor's Degrees", subtitle = "Boston") +
+  mapTheme() + theme(plot.title = element_text(size=18))
+
+#3: Income Map ### doesn't work yet
+ggplot() +
+  geom_sf(data=st_union(allTracts.group)) +
+  geom_sf(data = allTracts.group, aes(fill = q5(medHHInc))) +
+  facet_wrap(~TOD + year) + 
+  scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.group, "MedianHHIncome"),
+                    name = "Income\n(Quintile Breaks)") +
+  labs(title = "Income", subtitle = "Boston") +
+  mapTheme() + theme(plot.title = element_text(size=18))
+
+#4: No Vehicle Map ### doesn't work yet
+ggplot() +
+  geom_sf(data=st_union(allTracts.group)) +
+  geom_sf(data = allTracts.group, aes(fill = q5(pctNoVehicle))) +
+  facet_wrap(~TOD + year) + 
+  scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.group, "NoVehicle"),
+                    name = "No Vehicle\n(Quintile Breaks)") +
+  labs(title = "No Vehicle Households", subtitle = "Boston") +
   mapTheme() + theme(plot.title = element_text(size=18))
 
 ###########################TOD Indicator Tables################################
