@@ -456,7 +456,7 @@ selectCentroids <-
   mutate(Selection_Type = "Select by Centroids")
 
 
-###########################indicator map########################################
+###########################INDICATOR MAPS########################################
 
 allTracts.group <- 
   rbind(
@@ -472,6 +472,16 @@ allTracts.group <-
       mutate(TOD = "Non-TOD")) %>%
   mutate(Rent.inf = ifelse(year == "2009", Rent * 1.14, Rent))
 
+#Population Map
+## AD: Can we facet wrap by two variables? - eg year and TOD
+ggplot() +
+  geom_sf(data = allTracts.group, aes(fill = q5(Population))) +
+  facet_wrap(~TOD) + 
+  scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.group, "Population"),
+                    name = "Population\n(Quintile Breaks)") +
+  labs(title = "Total Population", subtitle = "Boston") +
+  mapTheme() + theme(plot.title = element_text(size=22))
 
 ###########################TOD Indicator Tables################################
 
