@@ -109,13 +109,13 @@ mapTheme <- function(base_size = 12) {
     axis.title.y = element_blank(),
     panel.grid.minor = element_blank(),
     panel.border = element_rect(colour = "black", fill=NA, size=2),
-    strip.text.x = element_text(size = 14))
+    strip.text.x = element_text(size = 10))
 }
 
 plotTheme <- function(base_size = 12) {
   theme(
     text = element_text( color = "black"),
-    plot.title = element_text(size = 16,colour = "black"),
+    plot.title = element_text(size = 10,colour = "black"),
     plot.subtitle = element_text(face="italic"),
     plot.caption = element_text(hjust=0),
     axis.ticks = element_blank(),
@@ -124,14 +124,14 @@ plotTheme <- function(base_size = 12) {
     panel.grid.minor = element_blank(),
     panel.border = element_rect(colour = "black", fill=NA, size=2),
     strip.background = element_rect(fill = "grey80", color = "white"),
-    strip.text = element_text(size=12),
-    axis.title = element_text(size=12),
+    strip.text = element_text(size=10),
+    axis.title = element_text(size=10),
     axis.text = element_text(size=10),
     plot.background = element_blank(),
     legend.background = element_blank(),
     legend.title = element_text(colour = "black", face = "italic"),
     legend.text = element_text(colour = "black", face = "italic"),
-    strip.text.x = element_text(size = 14)
+    strip.text.x = element_text(size = 10)
   )
 }
 
