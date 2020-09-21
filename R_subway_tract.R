@@ -12,7 +12,7 @@ library(kableExtra)
 options(scipen=999)
 options(tigris_class = "sf")
 
-######################DEFINE MULTIPLERINGBUFFER FUNCTION########################
+######################DEFINE MULTIPLE RING BUFFER FUNCTION########################
 
 multipleRingBuffer <- function(inputPolygon, maxDistance, interval) 
 {
@@ -45,7 +45,6 @@ multipleRingBuffer <- function(inputPolygon, maxDistance, interval)
       #add a new field, 'distance' so we know how far the distance is for a give ring
       thisRing$distance <- distances[distancesCounter]
     }
-    
     
     #otherwise, if this is the second or more ring (and a negative buffer)
     else if(distances[distancesCounter] < 0 & distancesCounter > 2) 
@@ -96,7 +95,7 @@ multipleRingBuffer <- function(inputPolygon, maxDistance, interval)
   allRings <- st_as_sf(allRings)
 }
 
-############################Map/Plot Formatting#################################
+############################Plot Formatting#################################
 mapTheme <- function(base_size = 12) {
   theme(
     text = element_text( color = "black"),
@@ -152,22 +151,19 @@ q5 <- function(variable) {as.factor(ntile(variable, 5))}
 # Palette
 palette5 <- c("#f0f9e8","#bae4bc","#7bccc4","#43a2ca","#0868ac")
 
-####################################get data####################################
+####################################ACS DATA####################################
 
 # Input API key
 census_api_key("d9ebfd04caa0138647fbacd94c657cdecbf705e9", install = TRUE, overwrite = TRUE)
 
 rm(sub_16_5, sub_17_5)
-# Median Rent, MHHINC, Population, Bachelor's, No. Vehicle (home owner, renter), Households (owner, renter)
+# Median Rent, MHHINC, Population, Bachelor's, No. Vehicle (home owner, renter), Households (owner, renter occupied)
 ## projection: (NAD 1983 StatePlane Massachusetts Mainland FIPS 2001 Feet)
 tracts10 <-  
   get_acs(geography = "tract", variables = c("B25058_001E", "B19013_001E", "B01003_001E", "B06009_005E", 
                                              "B25044_003E", "B25044_010E", "B07013_002E", "B07013_003E"), 
           year=2010, state=25, county=025, geometry=T) %>% 
   st_transform('ESRI:102686')
-
-#BC https://en.wikipedia.org/wiki/MBTA_subway 
-#BC I think our focus will be mainly on silver line, which started on 2002
 
 tracts18 <-  
   get_acs(geography = "tract", variables = c("B25058_001E", "B19013_001E", "B01003_001E", "B06009_005E", 
@@ -176,8 +172,7 @@ tracts18 <-
   st_transform('ESRI:102686')
 
 
-###############################plot data 10########################################
-###################################################################################
+###############################plot 2010 data########################################
 
 # rent
 tracts10_rent <-
@@ -243,11 +238,11 @@ tracts10 <-
   spread(variable, estimate) %>%
   dplyr::select(-geometry) %>%
   rename(Rent = B25058_001, 
-         MedHHInc = B19013_001,
-         Population = B01003_001, 
-         Bachelor = B06009_005,
-         NoVehicle_hmow = B25044_003, 
-         NoVehicle_hmre = B25044_010,
+         medHHInc = B19013_001,
+         population = B01003_001, 
+         bachelor = B06009_005,
+         noVehicle_hmow = B25044_003, 
+         noVehicle_hmre = B25044_010,
          Households_hmow = B07013_002,
          Households_hmre = B07013_003)
 
@@ -256,11 +251,11 @@ st_drop_geometry(tracts10)[1:3,]
 tracts10 <- 
   tracts10 %>%
   mutate(pctBach = ifelse(Population > 0, Bachelor / Population, 0),
-         pctNoVehicle = ifelse(Households_hmow + Households_hmre > 0, 
-                               (NoVehicle_hmow + NoVehicle_hmre) / 
-                                  (Households_hmow + Households_hmre),0),
+         pctNoVehicle = ifelse(householdsHmow + householdsHmre > 0, 
+                               (noVehicleHmow + noVehicleHmre) / 
+                                  (householdsHmow + householdsHmre),0),
          year = "2010") %>%
-  dplyr::select(-Households_hmow,-Households_hmre,-NoVehicle_hmow, -NoVehicle_hmre, -Bachelor)
+  dplyr::select(-householdsHmow,-householdsHmre,-noVehicleHmow, -noVehicleHmre, -bachelor)
 
 
 ###############################plot data 19########################################
@@ -302,11 +297,11 @@ tracts18_bach <-
 plot(tracts18_bach[,4])
 
 # No. Vehicle (home owner)
-tracts18_noCarOwner <-
+tracts18_noCarHmow <-
   tracts18 %>%
   filter(variable == "B25044_003")
 
-plot(tracts18_noCarOwner[,4])
+plot(tracts18_noCarHmow[,4])
 
 # No. Vehicle (renter)
 tracts18_noCarRenter <-
@@ -322,30 +317,30 @@ tracts18 <-
   spread(variable, estimate) %>%
   dplyr::select(-geometry) %>%
   rename(Rent = B25058_001, 
-         MedHHInc = B19013_001,
-         Population = B01003_001, 
-         Bachelor = B06009_005,
-         NoVehicle_hmow = B25044_003, 
-         NoVehicle_hmre = B25044_010,
-         Households_hmow = B07013_002,
-         Households_hmre = B07013_003)
+         medHHInc = B19013_001,
+         population = B01003_001, 
+         bachelor = B06009_005,
+         noVehicleHmow = B25044_003, 
+         noVehicleHmre = B25044_010,
+         householdsHmow = B07013_002,
+         householdsHmre = B07013_003)
 
 st_drop_geometry(tracts10)[1:3,]
 ###################################mutate##########################################
 tracts18 <- 
   tracts18 %>%
-  mutate(pctBach = ifelse(Population > 0, Bachelor / Population, 0),
-         pctNoVehicle = ifelse(Households_hmow + Households_hmre > 0, 
-                               (NoVehicle_hmow + NoVehicle_hmre) / 
-                                 (Households_hmow + Households_hmre),0),
+  mutate(pctBach = ifelse(population > 0, bachelor / population, 0),
+         pctNoVehicle = ifelse(householdsHmow + householdsHmre > 0, 
+                               (noVehicleHmow + noVehicleHmre) / 
+                                 (householdsHmow + householdsHmre),0),
          year = "2018") %>%
-  dplyr::select(-Households_hmow,-Households_hmre,-NoVehicle_hmow, -NoVehicle_hmre, -Bachelor)
+  dplyr::select(-householdsHmow,-householdsHmre,-noVehicleHmow, -noVehicleHmre, -bachelor)
 
 ###################################bind 2009 and 2018#############################
 allTracts <- rbind(tracts10,tracts18)
 
 ##################################take out non-Boston tracts######################
-BOSTracts10 <- c("25025010405", "25025010404", "25025010801", "25025010702", "25025010204", 
+bosTracts <- c("25025010405", "25025010404", "25025010801", "25025010702", "25025010204", 
 "25025010802", "25025010104", "25025000703", "25025000504", "25025000704", "25025010103", 
 "25025000803", "25025980300", "25025120201", "25025120104", "25025110607", "25025000302", 
 "25025000301", "25025140400", "25025140300", "25025140201", "25025140202", "25025140102", 
@@ -377,12 +372,11 @@ BOSTracts10 <- c("25025010405", "25025010404", "25025010801", "25025010702", "25
 "25025020303", "25025070402", "25025020302", "25025020301", "25025020101", "25025081001", 
 "25025010403", "25025000100")
 
-allTractsBOS <- 
-  subset(allTracts, GEOID %in% BOSTracts10)
+allTractsBos <- 
+  subset(allTracts, GEOID %in% bosTracts)
 
 
 #################################transit data######################################
-##################################################################################
 #mbta_node <- st_transform(st_crs(tracts10))
 #  rbind(
 #    st_read("https://docs.digital.mass.gov/api/3/action/package_show?id=89711539-cf8a-4386-bf91-a1110c541da0") %>% 
@@ -401,11 +395,11 @@ allTractsBOS <-
 #      mutate(LINE ="BLUE") %>%#1904
 #      select(STATION, LINE)) %>% 
 
-mbta_node <- st_read("/Users/annaduan/Documents/GitHub/TOD-Assignment/mbta_node.geojson") %>% st_transform(st_crs(allTractsBOS)) 
+mbtaNode <- st_read("/Users/annaduan/Documents/GitHub/TOD-Assignment/mbta_node.geojson") %>% st_transform(st_crs(allTractsBOS)) 
 
 ############################################Exclude stops outside Boston############################################
-boston_stations <-
-  mbta_node %>%
+bosStations <-
+  mbtaNode %>%
   filter(station != "Alewife" & station != "Assembly" & station != "Beachmont" & station !=  "Beaconsfield" & station !=  "Bellingham Square" & station !=  "Box District" & station !=  
          "Braintree" & station !=  "Brandon Hall" & station !=  "Brookline Village" & station !=  "Brookline Hills" & station !=  "Capen Street" & station !=  "Central" & station !=  
          "Central Avenue" & station !=  "Chelsea" & station !=  "Chestnut Hill" & station !=  "Coolidge Corner" & station !=  "Davis" & station !=  "Dean Road" & station !=  "Eastern Avenue" & station !=  
@@ -417,8 +411,8 @@ boston_stations <-
 
 # Station plot
 ggplot() + 
-  geom_sf(data=st_union(allTractsBOS)) +
-  geom_sf(data=boston_stations, aes(colour = line), show.legend = "point", size= 2) +
+  geom_sf(data=st_union(allTractsBos)) +
+  geom_sf(data=bosStations, aes(colour = line), show.legend = "point", size= 2) +
   scale_colour_manual(values = c("orange","blue","red","green","purple","gray","yellow","pink","dark blue","dark green")) +
   labs(title="Subway Stops", subtitle="Boston, MA", caption="Figure 1.1") +
   mapTheme()
@@ -426,39 +420,39 @@ ggplot() +
 
 
 ####################################set buffer##################################
-bostonBuffers <- 
+bosBuffers <- 
   rbind(
-    st_buffer(boston_stations, 2640) %>% #in feet
+    st_buffer(bosStations, 2640) %>% #in feet
       mutate(Legend = "Buffer") %>%
       dplyr::select(Legend),
-    st_union(st_buffer(boston_stations, 2640)) %>% #union buffer
+    st_union(st_buffer(bosStations, 2640)) %>% #union buffer
       st_sf() %>%
       mutate(Legend = "Unioned Buffer"))
 
 #The resulting 'small multiple' map is only possible when data is organized in long form.
 ggplot() +
-  geom_sf(data=st_union(allTractsBOS)) +
-  geom_sf(data=bostonBuffers) +
-  geom_sf(data=boston_stations, show.legend = "point") +
+  geom_sf(data=st_union(allTractsBos)) +
+  geom_sf(data=bosBuffers) +
+  geom_sf(data=bosStations, show.legend = "point") +
   facet_wrap(~Legend) +  #wrap by years and make small multiple plots
   labs(caption = "Figure 1.2") +
   mapTheme()
 #############################multi-ring buffer##################################
 
-multiBuffers <- multipleRingBuffer(boston_stations, 10, 1)
+multiBuffers <- multipleRingBuffer(bosStations, 10, 1)
 
 ggplot() + geom_sf(data = multiBuffers, aes(fill = distance))
 
 #############################spatial operation##################################
 
-buffer <- filter(bostonBuffers, Legend=="Unioned Buffer")
+buffer <- filter(bosBuffers, Legend=="Unioned Buffer")
 
 selectCentroids <-
-  st_centroid(allTractsBOS)[buffer,] %>%
+  st_centroid(allTractsBos)[buffer,] %>%
   st_drop_geometry() %>%
-  left_join(dplyr::select(tracts18, GEOID)) %>%
+  left_join(dplyr::select(allTractsBos, GEOID)) %>%
   st_sf() %>%
-  dplyr::select(TotalPop) %>%
+  dplyr::select(Population) %>%
   mutate(Selection_Type = "Select by Centroids")
 
 
@@ -466,17 +460,17 @@ selectCentroids <-
 
 allTracts.group <- 
   rbind(
-    st_centroid(allTracts)[buffer,] %>%
+    st_centroid(allTractsBos)[buffer,] %>%
       st_drop_geometry() %>%
-      left_join(allTracts) %>%
+      left_join(allTractsBos) %>%
       st_sf() %>%
       mutate(TOD = "TOD"),
-    st_centroid(allTracts)[buffer, op = st_disjoint] %>%
+    st_centroid(allTractsBos)[buffer, op = st_disjoint] %>%
       st_drop_geometry() %>%
-      left_join(allTracts) %>%
+      left_join(allTractsBos) %>%
       st_sf() %>%
       mutate(TOD = "Non-TOD")) %>%
-  mutate(MedRent.inf = ifelse(year == "2009", MedRent * 1.14, MedRent))
+  mutate(Rent.inf = ifelse(year == "2009", Rent * 1.14, Rent))
 #need to change here!!!
 ##################
 #################
