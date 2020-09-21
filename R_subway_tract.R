@@ -471,21 +471,18 @@ allTracts.group <-
       st_sf() %>%
       mutate(TOD = "Non-TOD")) %>%
   mutate(Rent.inf = ifelse(year == "2009", Rent * 1.14, Rent))
-#need to change here!!!
-##################
-#################
-##MedRent?
+
 
 ###########################TOD Indicator Tables################################
 
 allTracts.Summary <- 
   st_drop_geometry(allTracts.group) %>%
   group_by(year, TOD) %>%
-  summarize(Rent = mean(MedRent, na.rm = T),
-            Population = mean(TotalPop, na.rm = T),
-            Percent_White = mean(pctWhite, na.rm = T),
-            Percent_Bach = mean(pctBachelors, na.rm = T),
-            Percent_Poverty = mean(pctPoverty, na.rm = T))
+  summarize(Rent = mean(Rent, na.rm = T),
+            Population = mean(Population, na.rm = T),
+            pctBach = mean(pctBach, na.rm = T),
+            pctNoVehicle = mean(pctNoVehicle, na.rm = T),
+            MedHHInc = mean(MedHHInc, na.rm = T))
 
 kable(allTracts.Summary) %>%
   kable_styling() %>%
