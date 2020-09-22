@@ -10,6 +10,21 @@ Provide a brief motivation at the beginning, annotate each visualization appropr
 Do households value transit-rich neighborhoods compared to others? How certain can you be about your conclusions given some of the spatial biases we've discussed? 
 
 1.Show your data wrangling work.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen=999)
+options(tigris_class = "sf")
+
+
+install.packages("tidyverse")
+library(tidyverse)
+install.packages("tidycensus")
+library(tidycensus)
+library(sf)
+library(kableExtra)
+
+```
+
 2.Four small-multiple (2000 & 2017+) visualizations comparing four selected Census variables across time and space (TOD vs. non-TOD).
 3.One grouped bar plot making these same comparisons.
 4.One table making these same comparisons.
@@ -17,9 +32,7 @@ Do households value transit-rich neighborhoods compared to others? How certain c
 7.Create a geom_line plot that shows mean rent as a function of distance to subway stations (Figure x.x.x). To do this you will need to use the multipleRingBuffer function in the ppaR package.
 8.Download and wrangle point-level crime data (pick a crime type). What is the relationship between crime, transit access and rents
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 ## R Markdown
 

@@ -156,16 +156,15 @@ palette5 <- c("#f0f9e8","#bae4bc","#7bccc4","#43a2ca","#0868ac")
 # Input API key
 census_api_key("d9ebfd04caa0138647fbacd94c657cdecbf705e9", install = TRUE, overwrite = TRUE)
 
-rm(sub_16_5, sub_17_5)
 # Median Rent, MHHINC, Population, Bachelor's, No. Vehicle (home owner, renter), Households (owner, renter occupied)
 ## projection: (NAD 1983 StatePlane Massachusetts Mainland FIPS 2001 Feet)
-tracts10 <-  
+oritracts10 <-  
   get_acs(geography = "tract", variables = c("B25058_001E", "B19013_001E", "B01003_001E", "B06009_005E", 
                                              "B25044_003E", "B25044_010E", "B07013_002E", "B07013_003E"), 
           year=2010, state=25, county=025, geometry=T) %>% 
   st_transform('ESRI:102686')
 
-tracts18 <-  
+oritracts18 <-  
   get_acs(geography = "tract", variables = c("B25058_001E", "B19013_001E", "B01003_001E", "B06009_005E", 
                                              "B25044_003E", "B25044_010E", "B07013_002E", "B07013_003E"), 
           year=2018, state=25, county=025, geometry=T) %>% 
@@ -176,64 +175,67 @@ tracts18 <-
 
 # rent
 tracts10_rent <-
-  tracts10 %>%
+  oritracts10 %>%
   filter(variable == "B25058_001")
 
 plot(tracts10_rent[,4])
 
 # household income
 tracts10_income <-
-  tracts10 %>%
+  oritracts10 %>%
   filter(variable == "B19013_001")
 
 plot(tracts10_income[,4])
 
 # population
 tracts10_pop <-
-  tracts10 %>%
+  oritracts10 %>%
   filter(variable == "B01003_001")
 
 plot(tracts10_pop[,4])
 
 # Bachelor's
 tracts10_bach <-
-  tracts10 %>%
+  oritracts10 %>%
   filter(variable == "B06009_005")
 
 plot(tracts10_bach[,4])
 
 # No. Vehicle (home owner)
 tracts10_noCarOwner <-
-  tracts10 %>%
+  oritracts10 %>%
   filter(variable == "B25044_003")
 
 plot(tracts10_noCarOwner[,4])
 
 # No. Vehicle (renter)
 tracts10_noCarRenter <-
-  tracts10 %>%
+  oritracts10 %>%
   filter(variable == "B25044_010")
 
 plot(tracts10_noCarRenter[,4])
 
 # No. Owner-occupied households
 tracts10_ownerHH <-
-  tracts10 %>%
+  oritracts10 %>%
   filter(variable == "B07013_002")
 
 plot(tracts10_ownerHH[,4])
 
 # No. Renter-occupied households
 tracts10_renterHH <-
-  tracts10 %>%
+  oritracts10 %>%
   filter(variable == "B07013_003")
 
 plot(tracts10_renterHH[,4])
 
 
 ##############################long form to wide form###############################
+#have to change the original file to oritracts because we change the variables names here, then if we go back 
+#to run the plots, it won't work because the variabes are no long "B...."
+
 tracts10 <- 
-  tracts10 %>%
+  oritracts10 %>%
   dplyr::select( -NAME, -moe) %>%
   spread(variable, estimate) %>%
   dplyr::select(-geometry) %>%
@@ -247,22 +249,29 @@ tracts10 <-
          Households_hmre = B07013_003)
 
 st_drop_geometry(tracts10)[1:3,]
+
+#GEOID population bachelor Households_hmow Households_hmre medHHInc noVehicle_hmow noVehicle_hmre Rent
+#1 25025000100       3620      429            1084            2339    55179             55            207 1266
+#2 25025000201       3636      834            1235            2212    68010             37            221 1346
+#3 25025000202       3899      680            1573            2267    54151             58            206 1223
 ###################################mutate##########################################
+#the variables are selected from the table above
 tracts10 <- 
   tracts10 %>%
-  mutate(pctBach = ifelse(Population > 0, Bachelor / Population, 0),
-         pctNoVehicle = ifelse(householdsHmow + householdsHmre > 0, 
-                               (noVehicleHmow + noVehicleHmre) / 
-                                  (householdsHmow + householdsHmre),0),
+  mutate(pctBach = ifelse(population > 0, bachelor / population, 0),
+         pctNoVehicle = ifelse(Households_hmow + Households_hmre > 0, 
+                               (noVehicle_hmow + noVehicle_hmre) / 
+                                  (Households_hmow + Households_hmre),0),
          year = "2010") %>%
-  dplyr::select(-householdsHmow,-householdsHmre,-noVehicleHmow, -noVehicleHmre, -bachelor)
+  dplyr::select(-Households_hmow,-Households_hmre,-noVehicle_hmow,-noVehicle_hmre,-bachelor)
+#select the rest of the variables we don't use
+#the results are now in data tracts10 :)
 
-
-###############################plot data 19########################################
+###############################plot data 18########################################
 ###################################################################################
 # rent
 tracts18_rent <-
-  tracts18 %>%
+  oritracts18 %>%
   filter(variable == "B25058_001")
 
 plot(tracts18_rent[,4])
@@ -277,42 +286,42 @@ PlotRent <-
   mapTheme() + theme(plot.title = element_text(size=22))
 # household income
 tracts18_income <-
-  tracts18 %>%
+  oritracts18 %>%
   filter(variable == "B19013_001")
 
 plot(tracts18_income[,4])
 
 # population
 tracts18_pop <-
-  tracts18 %>%
+  oritracts18 %>%
   filter(variable == "B01003_001")
 
 plot(tracts18_pop[,4])
 
 # Bachelor's
 tracts18_bach <-
-  tracts18 %>%
+  oritracts18 %>%
   filter(variable == "B06009_005")
 
 plot(tracts18_bach[,4])
 
 # No. Vehicle (home owner)
 tracts18_noCarHmow <-
-  tracts18 %>%
+  oritracts18 %>%
   filter(variable == "B25044_003")
 
 plot(tracts18_noCarHmow[,4])
 
 # No. Vehicle (renter)
 tracts18_noCarRenter <-
-  tracts18 %>%
+  oritracts18 %>%
   filter(variable == "B25044_010")
 
 plot(tracts18_noCarRenter[,4])
 
 ##############################long form to wide form###############################
 tracts18 <- 
-  tracts18 %>%
+  oritracts18 %>%
   dplyr::select( -NAME, -moe) %>%
   spread(variable, estimate) %>%
   dplyr::select(-geometry) %>%
@@ -320,23 +329,29 @@ tracts18 <-
          medHHInc = B19013_001,
          population = B01003_001, 
          bachelor = B06009_005,
-         noVehicleHmow = B25044_003, 
-         noVehicleHmre = B25044_010,
-         householdsHmow = B07013_002,
-         householdsHmre = B07013_003)
+         noVehicle_hmow = B25044_003, 
+         noVehicle_hmre  = B25044_010,
+         Households_hmow = B07013_002,
+         Households_hmre = B07013_003)
 
-st_drop_geometry(tracts10)[1:3,]
+st_drop_geometry(tracts18)[1:3,]
+
+#GEOID population bachelor Households_hmow Households_hmre medHHInc noVehicle_hmow noVehicle_hmre Rent
+#1 25025000100       5324     1193            1244            4026    79597             12            310 1787
+#2 25025000201       3991     1498            1087            2834    88424             37            142 1956
+#3 25025000202       4272      967            1143            3046    83000             23            192 1475
 ###################################mutate##########################################
 tracts18 <- 
   tracts18 %>%
   mutate(pctBach = ifelse(population > 0, bachelor / population, 0),
-         pctNoVehicle = ifelse(householdsHmow + householdsHmre > 0, 
-                               (noVehicleHmow + noVehicleHmre) / 
-                                 (householdsHmow + householdsHmre),0),
+         pctNoVehicle = ifelse(Households_hmow + Households_hmre > 0, 
+                               (noVehicle_hmow + noVehicle_hmre) / 
+                                 (Households_hmow + Households_hmre),0),
          year = "2018") %>%
-  dplyr::select(-householdsHmow,-householdsHmre,-noVehicleHmow, -noVehicleHmre, -bachelor)
+  dplyr::select(-Households_hmow,-Households_hmre,-noVehicle_hmow,-noVehicle_hmre,-bachelor)
 
 ###################################bind 2009 and 2018#############################
+#in order to combine, we need to have exactly the same column names 
 allTracts <- rbind(tracts10,tracts18)
 
 ##################################take out non-Boston tracts######################
@@ -396,6 +411,7 @@ allTractsBos <-
 #      select(STATION, LINE)) %>% 
 
 mbtaNode <- st_read("/Users/annaduan/Documents/GitHub/TOD-Assignment/mbta_node.geojson") %>% st_transform(st_crs(allTractsBos)) 
+#mbtaNode <- st_read("E:/Upenn/CPLN508/TOD-Assignment/mbta_node.geojson") %>% st_transform(st_crs(allTractsBos)) 
 
 ############################################Exclude stops outside Boston############################################
 bosStations <-
@@ -411,14 +427,12 @@ bosStations <-
 
 # Station plot
 ggplot() + 
-  geom_sf(data=st_union(allTractsBos)) +
+  geom_sf(data=st_union(tracts10)) +
   geom_sf(data=bosStations, aes(colour = line), show.legend = "point", size= 2) +
   scale_colour_manual(values = c("orange","blue","red","green","purple","gray","yellow","pink","dark blue","dark green")) +
   labs(title="Subway Stops", subtitle="Boston, MA", caption="Figure 1.1") +
   mapTheme()
  
-
-
 ####################################set buffer##################################
 bosBuffers <- 
   rbind(
@@ -437,27 +451,80 @@ ggplot() +
   facet_wrap(~Legend) +  #wrap by years and make small multiple plots
   labs(caption = "Figure 1.2") +
   mapTheme()
-#############################multi-ring buffer##################################
-
-multiBuffers <- multipleRingBuffer(bosStations, 10, 1)
-
-ggplot() + geom_sf(data = multiBuffers, aes(fill = distance))
 
 #############################spatial operation##################################
-
 buffer <- filter(bosBuffers, Legend=="Unioned Buffer")
 
 selectCentroids <-
   st_centroid(allTractsBos)[buffer,] %>%
+    st_drop_geometry() %>%
+    left_join(dplyr::select(allTractsBos, GEOID)) %>%
+    st_sf() %>%
+    dplyr::select(year, population, Rent) %>%
+    mutate(Selection_Type = "Select by Centroids")
+
+ggplot(selectCentroids)+
+  geom_sf(data = st_union(allTractsBos))+
+  geom_sf(aes(fill = q5(population))) +
+  scale_fill_manual(values = palette5,
+                    labels = qBr(selectCentroids, "population"),
+                    name = "Popluation\n(Quintile Breaks)") +
+  labs(title = "Total Population", subtitle = "Boston; 2010") +
+  facet_wrap(~Selection_Type)+
+  mapTheme() + 
+  theme(plot.title = element_text(size=22))
+
+
+
+###map the centroids to show population change
+#?what to do if the maps in 2010 and 2018 are different? should we combine the two
+#?or just present the two seperately?
+######################10#########################
+selectCentroids10 <-
+  st_centroid(tracts10)[buffer,] %>%
+    st_drop_geometry() %>%
+    left_join(dplyr::select(tracts10, GEOID)) %>%
+    st_sf() %>%
+    dplyr::select(year, population, Rent) %>%
+    mutate(Selection_Type = "Select by Centroids")
+
+selectCentroids10$Rent <- as.numeric(selectCentroids10$Rent)
+#PLOT POPULATION
+ggplot(selectCentroids10)+
+  geom_sf(data = st_union(allTractsBos))+
+  geom_sf(aes(fill = q5(population))) +
+  scale_fill_manual(values = palette5,
+                    labels = qBr(selectCentroids10, "population"),
+                    name = "Popluation\n(Quintile Breaks)") +
+  labs(title = "Total Population", subtitle = "Boston; 2010") +
+  facet_wrap(~Selection_Type)+
+  mapTheme() + 
+  theme(plot.title = element_text(size=22))
+
+
+#########################18########################
+selectCentroids18 <-
+  st_centroid(tracts18)[buffer,] %>%
   st_drop_geometry() %>%
-  left_join(dplyr::select(allTractsBos, GEOID)) %>%
+  left_join(dplyr::select(tracts18, GEOID)) %>%
   st_sf() %>%
-  dplyr::select(Population) %>%
+  dplyr::select(year, population, Rent) %>%
   mutate(Selection_Type = "Select by Centroids")
 
+#PLOT POPULATION
+ggplot(selectCentroids18)+
+  geom_sf(data = st_union(allTractsBos))+
+  geom_sf(aes(fill = q5(population))) +
+  scale_fill_manual(values = palette5,
+                    labels = qBr(selectCentroids18, "population"),
+                    name = "Popluation\n(Quintile Breaks)") +
+  labs(title = "Total Population", subtitle = "Boston; 2018") +
+  facet_wrap(~Selection_Type)+
+  mapTheme() + 
+  theme(plot.title = element_text(size=22))
 
 ###########################INDICATOR MAPS########################################
-
+#In other words, $100 in 2010 is equivalent in purchasing power to about $115.21 in 2018
 allTracts.group <- 
   rbind(
     st_centroid(allTractsBos)[buffer,] %>%
@@ -470,51 +537,83 @@ allTracts.group <-
       left_join(allTractsBos) %>%
       st_sf() %>%
       mutate(TOD = "Non-TOD")) %>%
-  mutate(Rent.inf = ifelse(year == "2009", Rent * 1.14, Rent))
+  mutate(Rent.inf = ifelse(year == "2010", Rent * 1.1521, Rent))
+
+################10~18###############################
+#PLOT RENT####not sure where this belongs
+ggplot(allTracts.group)+
+  geom_sf(data = st_union(allTractsBos))+
+  geom_sf(aes(fill = q5(Rent.inf))) +
+  geom_sf(data = buffer, fill = "transparent", color = "red")+
+  scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.group, "Rent.inf"),
+                    name = "Rent\n(Quintile Breaks)") +
+  labs(title = "Median Rent 2010-2018", subtitle = "Real Dollars") +
+  facet_wrap(~year)+
+  mapTheme() + 
+  theme(plot.title = element_text(size=22))
+
 
 #1: Population Map
 ggplot() +
-  geom_sf(data=st_union(allTracts.group)) +
-  geom_sf(data = allTracts.group, aes(fill = q5(Population))) +
-  facet_wrap(~TOD + year) + 
+  geom_sf(data=st_union(allTractsBos)) +
+  geom_sf(data = allTracts.group, aes(fill = q5(population))) +
   scale_fill_manual(values = palette5,
-                    labels = qBr(allTracts.group, "Population"),
+                    labels = qBr(allTracts.group, "population"),
                     name = "Population\n(Quintile Breaks)") +
   labs(title = "Total Population", subtitle = "Boston") +
-  mapTheme() + theme(plot.title = element_text(size=18))
+  facet_wrap(~TOD + year) + 
+  mapTheme() + 
+  theme(plot.title = element_text(size=18))
 
-#2: Bachelor's Map ### doesn't work yet
+#2: Bachelor's Map
 ggplot() +
-  geom_sf(data=st_union(allTracts.group)) +
+  geom_sf(data=st_union(allTractsBos)) +
   geom_sf(data = allTracts.group, aes(fill = q5(pctBach))) +
-  facet_wrap(~TOD + year) + 
   scale_fill_manual(values = palette5,
-                    labels = qBr(allTracts.group, "Bachelor's"),
+                    labels = qBr(allTracts.group, "pctBach"),
                     name = "Bachelor Degrees\n(Quintile Breaks)") +
+  facet_wrap(~TOD + year) + 
   labs(title = "Bachelor's Degrees", subtitle = "Boston") +
-  mapTheme() + theme(plot.title = element_text(size=18))
+  mapTheme() + 
+  theme(plot.title = element_text(size=18))
 
-#3: Income Map ### doesn't work yet
+#3: Income Map 
 ggplot() +
-  geom_sf(data=st_union(allTracts.group)) +
+  geom_sf(data=st_union(allTractsBos)) +
   geom_sf(data = allTracts.group, aes(fill = q5(medHHInc))) +
-  facet_wrap(~TOD + year) + 
-  scale_fill_manual(values = palette5,
-                    labels = qBr(allTracts.group, "MedianHHIncome"),
-                    name = "Income\n(Quintile Breaks)") +
-  labs(title = "Income", subtitle = "Boston") +
-  mapTheme() + theme(plot.title = element_text(size=18))
 
-#4: No Vehicle Map ### doesn't work yet
-ggplot() +
-  geom_sf(data=st_union(allTracts.group)) +
-  geom_sf(data = allTracts.group, aes(fill = q5(pctNoVehicle))) +
-  facet_wrap(~TOD + year) + 
   scale_fill_manual(values = palette5,
-                    labels = qBr(allTracts.group, "NoVehicle"),
+                    labels = qBr(allTracts.group, "medHHInc"),
+                    name = "Income\n(Quintile Breaks)") +
+  facet_wrap(~TOD + year) + 
+  labs(title = "Income", subtitle = "Boston") +
+  mapTheme() + 
+  theme(plot.title = element_text(size=18))
+
+#4: No Vehicle Map
+ggplot() +
+  geom_sf(data=st_union(allTractsBos)) +
+  geom_sf(data = allTracts.group, aes(fill = q5(pctNoVehicle))) +
+  scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.group, "pctNoVehicle"),
                     name = "No Vehicle\n(Quintile Breaks)") +
+  facet_wrap(~TOD + year) + 
   labs(title = "No Vehicle Households", subtitle = "Boston") +
-  mapTheme() + theme(plot.title = element_text(size=18))
+  mapTheme() + 
+  theme(plot.title = element_text(size=18))
+
+#5: Rent Map
+ggplot() +
+  geom_sf(data=st_union(allTractsBos)) +
+  geom_sf(data = allTracts.group, aes(fill = q5(Rent))) +
+  scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.group, "Rent"),
+                    name = "Rent\n(Quintile Breaks)") +
+  facet_wrap(~TOD + year) + 
+  labs(title = "Rent", subtitle = "Boston") +
+  mapTheme() + 
+  theme(plot.title = element_text(size=18))
 
 ###########################TOD Indicator Tables################################
 
@@ -522,10 +621,10 @@ allTracts.Summary <-
   st_drop_geometry(allTracts.group) %>%
   group_by(year, TOD) %>%
   summarize(Rent = mean(Rent, na.rm = T),
-            Population = mean(Population, na.rm = T),
+            Population = mean(population, na.rm = T),
             pctBach = mean(pctBach, na.rm = T),
             pctNoVehicle = mean(pctNoVehicle, na.rm = T),
-            MedHHInc = mean(MedHHInc, na.rm = T))
+            MedHHInc = mean(medHHInc, na.rm = T))
 
 kable(allTracts.Summary) %>%
   kable_styling() %>%
@@ -569,40 +668,46 @@ downtown <-
   st_sf() %>%
   mutate(Submarket = "Downtown")
 
+#not sure where are the state stations?
 blue <-
-  st_buffer(filter(mbta_node, line == "BLUE"), 2640) %>% st_union() %>%
+  st_buffer(filter(mbtaNode, line == "BLUE"), 2640) %>% st_union() %>%
   st_sf() %>%
   st_difference(downtown) %>%
   mutate(Submarket = "Blue")
 
 orange <-
-  st_buffer(filter(mbta_node, line == "ORANGE"), 2640) %>% st_union() %>%
+  st_buffer(filter(mbtaNode, line == "ORANGE"), 2640) %>% st_union() %>%
   st_sf() %>%
   st_difference(downtown) %>%
   mutate(Submarket = "Orange")
 
 red <-
-  st_buffer(filter(mbta_node, line == "RED"), 2640) %>% st_union() %>%
+  st_buffer(filter(mbtaNode, line == "RED"), 2640) %>% st_union() %>%
   st_sf() %>%
   st_difference(downtown) %>%
   mutate(Submarket = "Red")
 
 silver <-
-  st_buffer(filter(mbta_node, line == "SILVER"), 2640) %>% st_union() %>%
+  st_buffer(filter(mbtaNode, line == "SILVER"), 2640) %>% st_union() %>%
   st_sf() %>%
   st_difference(downtown) %>%
   mutate(Submarket = "Silver")
 
 green <-
-  st_buffer(filter(mbta_node, line == "GREEN"), 2640) %>% st_union() %>%
+  st_buffer(filter(mbtaNode, line == "GREEN"), 2640) %>% st_union() %>%
   st_sf() %>%
   st_difference(downtown) %>%
   mutate(Submarket = "Green")
 
 sixMarkets <- rbind(silver, red, green, orange, blue, downtown)
 
-ggplot(sixMarkets)
-
+#problem: can't see downtown on the map?
+ggplot() + 
+  geom_sf(data=st_union(allTractsBos)) +
+  geom_sf(data=sixMarkets, aes(colour = Submarket), fill = "transparent", show.legend = "point", size= 1) +
+  scale_colour_manual(values = c("gray","red","green","orange","blue","yellow")) +
+  labs(title="six submarkets", subtitle="Boston, MA", caption="Figure 1.3") +
+  mapTheme()
 # You can then bind these buffers to tracts and map them or make small multiple plots
 
 allTracts.sixMarkets <-
@@ -628,10 +733,10 @@ allTracts.sixMarkets.Summary <-
   st_drop_geometry(allTracts.group) %>%
   group_by(year, TOD) %>%
   summarize(Rent = mean(Rent, na.rm = T),
-            Population = mean(Population, na.rm = T),
+            Population = mean(population, na.rm = T),
             pctBach = mean(pctBach, na.rm = T),
             pctNoVehicle = mean(pctNoVehicle, na.rm = T),
-            MedHHInc = mean(MedHHInc, na.rm = T))
+            MedHHInc = mean(medHHInc, na.rm = T))
 
 kable(allTracts.Summary) %>%
   kable_styling() %>%
@@ -662,8 +767,133 @@ allTracts.sixMarkets.Summary %>%
   plotTheme() + theme(legend.position="bottom")
 
 
+###############################graduate map#########################################
+centectroi10_pop <- st_centroid(selectCentroids10[,1])
+centectroi18_pop <- st_centroid(selectCentroids18[,1])
+troi_pop <- rbind(selectCentroids10[,1:2], selectCentroids18[,1:2]) 
+oitroi_pop.group <- st_centroid(troi_pop)
+centectroi10_re <- st_centroid(selectCentroids10[,2])
+centectroi18_re <- st_centroid(selectCentroids18[,2])
+troi_rent <- rbind(selectCentroids10[,c(1,3)], selectCentroids18[,c(1,3)]) 
+oitroi_rent.group <- st_centroid(troi_rent)
+
+ggplot() + 
+  geom_sf(data=st_union(allTractsBos)) +
+  geom_sf(data = buffer, fill = "white") + 
+  geom_sf(data = oitroi_pop.group, aes(size = population), shape = 21, 
+      fill = "lightblue", alpha = 0.5, show.legend = "point") + 
+  scale_size_continuous(range = c(1, 12))+
+  facet_wrap(~year)+
+  labs(title = "Population 2010-2018") +
+  mapTheme() + 
+  theme(plot.title = element_text(size=22))
+
+ggplot() + 
+  geom_sf(data=st_union(allTractsBos)) +
+  geom_sf(data = buffer, fill = "white") + 
+  geom_sf(data = oitroi_rent.group, aes(size = Rent), shape = 21, 
+          fill = "pink", alpha = 0.5, show.legend = "point") + 
+  scale_size_continuous(range = c(1, 12))+
+  facet_wrap(~year)+
+  labs(title = "Rent 2010-2018") +
+  mapTheme() + 
+  theme(plot.title = element_text(size=22))
+
+
+#############################multi-ring buffer##################################
+
+multiBuffers <- multipleRingBuffer(bosStations, 10, 0.5)
+#buffernum <- subset(multiBuffers, distance = num)
+# for 2010
+rent_dis10 <- data.frame(
+  distance = double(),
+  meanrent = double(),
+  stringsAsFactors=FALSE
+)
+
+for (i in seq(0.5,10, by = 0.5)){
+  
+  a <- st_union(st_buffer(bosStations, i*5280)) %>% st_sf()
+  b <-
+    st_centroid(trants10)[a,] %>%
+    st_drop_geometry() %>%
+    left_join(dplyr::select(tracts10, GEOID)) %>%
+    st_sf() %>%
+    dplyr::select(Rent)
+  b$Rent <- as.numeric(b$Rent)
+  c <- mean(b[["Rent"]],na.rm=TRUE)
+  d <- data.frame(distance=i, meanrent=c, stringsAsFactors=FALSE)
+  rent_dis10 <- rbind(rent_dis10, d)
+#  rent_dis10 %>% add_row(distance = i, meanrent = c)
+  i <- i + 0.5
+}
+
+
+# for 2018
+rent_dis18 <- data.frame(
+  distance = double(),
+  meanrent = double(),
+  stringsAsFactors=FALSE
+)
+
+for (i in seq(0.5,10, by = 0.5)){
+  
+  a <- st_union(st_buffer(bosStations, i*5280)) %>% st_sf()
+  b <-
+    st_centroid(tracts18)[a,] %>%
+    st_drop_geometry() %>%
+    left_join(dplyr::select(tracts18, GEOID)) %>%
+    st_sf() %>%
+    dplyr::select(Rent)
+  b$Rent <- as.numeric(b$Rent)
+  c <- mean(b[["Rent"]],na.rm=TRUE)
+  d <- data.frame(distance=i, meanrent=c, stringsAsFactors=FALSE)
+  rent_dis18 <- rbind(rent_dis18, d)
+  #  rent_dis10 %>% add_row(distance = i, meanrent = c)
+  i <- i + 0.5
+}
+
+##?maybe we should edit the color and size of the lines?
+
+ggplot(rent_dis10, aes(x=distance, y=meanrent)) +
+  geom_line(arrow = arrow())+
+  geom_point()
+ggplot(rent_dis18, aes(x=distance, y=meanrent)) +
+  geom_line(arrow = arrow())+
+  geom_point()
+
+#if we have moe data for rent
+
+ggplot(df3, aes(x=dose, y=len, group=supp, color=supp)) + 
+  geom_errorbar(aes(ymin=len-sd, ymax=len+sd), width=.1, 
+                position=position_dodge(0.05)) +
+  geom_line() + geom_point()+
+  scale_color_brewer(palette="Paired")+theme_minimal()
+
+#from help
+# Setting line type vs colour/size
+# Line type needs to be applied to a line as a whole, so it can
+# not be used with colour or size that vary across a line
+x <- seq(0.01, .99, length.out = 100)
+df <- data.frame(
+  x = rep(x, 2),
+  y = c(qlogis(x), 2 * qlogis(x)),
+  group = rep(c("a","b"),
+              each = 100)
+)
+p <- ggplot(df, aes(x=x, y=y, group=group))
+# These work
+p + geom_line(linetype = 2)
+p + geom_line(aes(colour = group), linetype = 2)
+p + geom_line(aes(colour = x))
+# But this doesn't
+should_stop(p + geom_line(aes(colour = x), linetype=2))
 ####################################Crime Data############################################
 crime2012 <- st_read("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime2012.geojson") %>% st_transform(st_crs(allTractsBos))
 crime2012_sf <- st_as_sf(crime2012, coords = c("Location"), crs = 4326) %>%
   st_transform('ESRI:102686')
+#are we doing 2012-2019 in crime data?
+#crime2012 <- st_read("E:/Upenn/CPLN508/TOD-Assignment/Crime2012.geojson") %>% st_transform(st_crs(allTractsBos))
+#crime2019 <- st_read("E:/Upenn/CPLN508/TOD-Assignment/Crime2019.geojson") %>% st_transform(st_crs(allTractsBos))
+
 
