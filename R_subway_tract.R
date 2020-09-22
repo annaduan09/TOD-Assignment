@@ -395,7 +395,7 @@ allTractsBos <-
 #      mutate(LINE ="BLUE") %>%#1904
 #      select(STATION, LINE)) %>% 
 
-mbtaNode <- st_read("/Users/annaduan/Documents/GitHub/TOD-Assignment/mbta_node.geojson") %>% st_transform(st_crs(allTractsBOS)) 
+mbtaNode <- st_read("/Users/annaduan/Documents/GitHub/TOD-Assignment/mbta_node.geojson") %>% st_transform(st_crs(allTractsBos)) 
 
 ############################################Exclude stops outside Boston############################################
 bosStations <-
@@ -663,5 +663,5 @@ allTracts.sixMarkets.Summary %>%
 
 
 ####################################Crime Data############################################
-
-
+crime2012 <- st_read("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime2012.geojson") %>% st_transform(st_crs(allTractsBos)) 
+ggplot(crime2012)
