@@ -663,5 +663,7 @@ allTracts.sixMarkets.Summary %>%
 
 
 ####################################Crime Data############################################
-crime2012 <- st_read("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime2012.geojson") %>% st_transform(st_crs(allTractsBos)) 
-ggplot(crime2012)
+crime2012 <- st_read("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime2012.geojson") %>% st_transform(st_crs(allTractsBos))
+crime2012_sf <- st_as_sf(crime2012, coords = c("Location"), crs = 4326) %>%
+  st_transform('ESRI:102686')
+
