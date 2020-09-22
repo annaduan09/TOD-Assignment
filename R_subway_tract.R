@@ -601,6 +601,8 @@ green <-
 
 sixMarkets <- rbind(silver, red, green, orange, blue, downtown)
 
+ggplot(sixMarkets)
+
 # You can then bind these buffers to tracts and map them or make small multiple plots
 
 allTracts.sixMarkets <-
@@ -609,6 +611,18 @@ allTracts.sixMarkets <-
   left_join(allTractsBos) %>%
   mutate(Submarket = replace_na(Submarket, "Non-TOD")) %>%
   st_sf() 
+
+ggplot() +
+  geom_sf(data=st_union(allTracts.sixMarkets)) +
+  geom_sf(data = allTracts.sixMarkets, aes(fill = q5(Rent))) +
+  facet_wrap(~Submarket + year) + 
+  scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.sixMarkets, "Rent"),
+                    name = "Rent\n(Quintile Breaks)") +
+  labs(title = "Rent", subtitle = "Boston") +
+  mapTheme() + theme(plot.title = element_text(size=18))
+
+
 #spread goes long to wide, gather opposite
 allTracts.sixMarkets.Summary <- 
   st_drop_geometry(allTracts.group) %>%
