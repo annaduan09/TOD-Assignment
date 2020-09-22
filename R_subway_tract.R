@@ -79,7 +79,7 @@ multipleRingBuffer <- function(inputPolygon, maxDistance, interval)
       thisRing <- st_cast(thisRing, "POLYGON")
       #geometry column as a data frame
       thisRing <- as.data.frame(thisRing[,ncol(thisRing)])
-      #add teh distance
+      #add the distance
       thisRing$distance <- distances[distancesCounter]
     }  
     
@@ -149,7 +149,7 @@ qBr <- function(df, variable, rnd) {
 q5 <- function(variable) {as.factor(ntile(variable, 5))}
 
 # Palette
-palette5 <- c("#f0f9e8","#bae4bc","#7bccc4","#43a2ca","#0868ac")
+palette5 <- c("#b3cde0","#6497b1","#005b96","#03396c","#011f4b")
 
 ####################################ACS DATA####################################
 
@@ -202,18 +202,18 @@ tracts10_bach <-
 plot(tracts10_bach[,4])
 
 # No. Vehicle (home owner)
-tracts10_noCarOwner <-
+tracts10_noVehicleOwner <-
   oritracts10 %>%
   filter(variable == "B25044_003")
 
-plot(tracts10_noCarOwner[,4])
+plot(tracts10_noVehicleOwner[,4])
 
 # No. Vehicle (renter)
-tracts10_noCarRenter <-
+tracts10_noVehicleRenter <-
   oritracts10 %>%
   filter(variable == "B25044_010")
 
-plot(tracts10_noCarRenter[,4])
+plot(tracts10_noVehicleRenter[,4])
 
 # No. Owner-occupied households
 tracts10_ownerHH <-
@@ -306,14 +306,14 @@ tracts18_bach <-
 plot(tracts18_bach[,4])
 
 # No. Vehicle (home owner)
-tracts18_noCarHmow <-
+tracts18_noVehicleOwner <-
   oritracts18 %>%
   filter(variable == "B25044_003")
 
-plot(tracts18_noCarHmow[,4])
+plot(tracts18_noVehicleOwner[,4])
 
 # No. Vehicle (renter)
-tracts18_noCarRenter <-
+tracts18_noVehicleRenter <-
   oritracts18 %>%
   filter(variable == "B25044_010")
 
@@ -350,11 +350,11 @@ tracts18 <-
          year = "2018") %>%
   dplyr::select(-Households_hmow,-Households_hmre,-noVehicle_hmow,-noVehicle_hmre,-bachelor)
 
-###################################bind 2009 and 2018#############################
+###################################bind 2010 and 2018#############################
 #in order to combine, we need to have exactly the same column names 
 allTracts <- rbind(tracts10,tracts18)
 
-##################################take out non-Boston tracts######################
+##################################Remove non-Boston tracts######################
 bosTracts <- c("25025010405", "25025010404", "25025010801", "25025010702", "25025010204", 
 "25025010802", "25025010104", "25025000703", "25025000504", "25025000704", "25025010103", 
 "25025000803", "25025980300", "25025120201", "25025120104", "25025110607", "25025000302", 
@@ -413,7 +413,7 @@ allTractsBos <-
 mbtaNode <- st_read("/Users/annaduan/Documents/GitHub/TOD-Assignment/mbta_node.geojson") %>% st_transform(st_crs(allTractsBos)) 
 #mbtaNode <- st_read("E:/Upenn/CPLN508/TOD-Assignment/mbta_node.geojson") %>% st_transform(st_crs(allTractsBos)) 
 
-############################################Exclude stops outside Boston############################################
+############################################Exclude MBTA stops outside Boston############################################
 bosStations <-
   mbtaNode %>%
   filter(station != "Alewife" & station != "Assembly" & station != "Beachmont" & station !=  "Beaconsfield" & station !=  "Bellingham Square" & station !=  "Box District" & station !=  
@@ -429,7 +429,7 @@ bosStations <-
 ggplot() + 
   geom_sf(data=st_union(tracts10)) +
   geom_sf(data=bosStations, aes(colour = line), show.legend = "point", size= 2) +
-  scale_colour_manual(values = c("orange","blue","red","green","purple","gray","yellow","pink","dark blue","dark green")) +
+  scale_colour_manual(values = c("blue","dark green","brown","green","purple","black","yellow","pink","red","gray")) +
   labs(title="Subway Stops", subtitle="Boston, MA", caption="Figure 1.1") +
   mapTheme()
  
@@ -468,7 +468,7 @@ ggplot(selectCentroids)+
   geom_sf(aes(fill = q5(population))) +
   scale_fill_manual(values = palette5,
                     labels = qBr(selectCentroids, "population"),
-                    name = "Popluation\n(Quintile Breaks)") +
+                    name = "Population\n(Quintile Breaks)") +
   labs(title = "Total Population", subtitle = "Boston; 2010") +
   facet_wrap(~Selection_Type)+
   mapTheme() + 
@@ -479,6 +479,7 @@ ggplot(selectCentroids)+
 ###map the centroids to show population change
 #?what to do if the maps in 2010 and 2018 are different? should we combine the two
 #?or just present the two seperately?
+##AD: I think it's fine - it still works for facet wrap
 ######################10#########################
 selectCentroids10 <-
   st_centroid(tracts10)[buffer,] %>%
@@ -540,80 +541,71 @@ allTracts.group <-
   mutate(Rent.inf = ifelse(year == "2010", Rent * 1.1521, Rent))
 
 ################10~18###############################
-#PLOT RENT####not sure where this belongs
+
+#1: Population Map
+ggplot(allTracts.group)+
+  geom_sf(data = st_union(allTractsBos))+
+  geom_sf(aes(fill = q5(population))) +
+  geom_sf(data = buffer, fill = "transparent", color = "red")+
+  scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.group, "population"),
+                    name = "Population\n(Quintile Breaks, TOD in Red)") +
+  labs(title = "Total Population 2010-2018", subtitle = "Boston") +
+  facet_wrap(~year)+
+  mapTheme() + 
+  theme(plot.title = element_text(size=22))
+
+#2: Bachelor's Map
+ggplot(allTracts.group)+
+  geom_sf(data = st_union(allTractsBos))+
+  geom_sf(aes(fill = q5(pctBach))) +
+  geom_sf(data = buffer, fill = "transparent", color = "red")+
+  scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.group, "pctBach"),
+                    name = "% Adults >25 Years with Bachelor's\n(Quintile Breaks, TOD in Red)") +
+  labs(title = "Share of Adults with Bachelor's Degree 2010-2018", subtitle = "Boston") +
+  facet_wrap(~year)+
+  mapTheme() + 
+  theme(plot.title = element_text(size=22))
+
+#3: Income Map 
+ggplot(allTracts.group)+
+  geom_sf(data = st_union(allTractsBos))+
+  geom_sf(aes(fill = q5(medHHInc))) +
+  geom_sf(data = buffer, fill = "transparent", color = "red")+
+  scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.group, "medHHInc"),
+                    name = "Median HH Income\n(Quintile Breaks, TOD in Red)") +
+  labs(title = "Median Household Income 2010-2018", subtitle = "Boston") +
+  facet_wrap(~year)+
+  mapTheme() + 
+  theme(plot.title = element_text(size=22))
+
+#4: No Vehicle Map
+ggplot(allTracts.group)+
+  geom_sf(data = st_union(allTractsBos))+
+  geom_sf(aes(fill = q5(pctNoVehicle))) +
+  geom_sf(data = buffer, fill = "transparent", color = "red")+
+  scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.group, "pctNoVehicle"),
+                    name = "% Households without Vehicle\n(Quintile Breaks, TOD in Red)") +
+  labs(title = "Share of Households without a Vehicle 2010-2018", subtitle = "Percentage") +
+  facet_wrap(~year)+
+  mapTheme() + 
+  theme(plot.title = element_text(size=22))
+
+#5: Rent Map
 ggplot(allTracts.group)+
   geom_sf(data = st_union(allTractsBos))+
   geom_sf(aes(fill = q5(Rent.inf))) +
   geom_sf(data = buffer, fill = "transparent", color = "red")+
   scale_fill_manual(values = palette5,
                     labels = qBr(allTracts.group, "Rent.inf"),
-                    name = "Rent\n(Quintile Breaks)") +
+                    name = "Rent\n(Quintile Breaks, TOD in Red)") +
   labs(title = "Median Rent 2010-2018", subtitle = "Real Dollars") +
   facet_wrap(~year)+
   mapTheme() + 
   theme(plot.title = element_text(size=22))
-
-
-#1: Population Map
-ggplot() +
-  geom_sf(data=st_union(allTractsBos)) +
-  geom_sf(data = allTracts.group, aes(fill = q5(population))) +
-  scale_fill_manual(values = palette5,
-                    labels = qBr(allTracts.group, "population"),
-                    name = "Population\n(Quintile Breaks)") +
-  labs(title = "Total Population", subtitle = "Boston") +
-  facet_wrap(~TOD + year) + 
-  mapTheme() + 
-  theme(plot.title = element_text(size=18))
-
-#2: Bachelor's Map
-ggplot() +
-  geom_sf(data=st_union(allTractsBos)) +
-  geom_sf(data = allTracts.group, aes(fill = q5(pctBach))) +
-  scale_fill_manual(values = palette5,
-                    labels = qBr(allTracts.group, "pctBach"),
-                    name = "Bachelor Degrees\n(Quintile Breaks)") +
-  facet_wrap(~TOD + year) + 
-  labs(title = "Bachelor's Degrees", subtitle = "Boston") +
-  mapTheme() + 
-  theme(plot.title = element_text(size=18))
-
-#3: Income Map 
-ggplot() +
-  geom_sf(data=st_union(allTractsBos)) +
-  geom_sf(data = allTracts.group, aes(fill = q5(medHHInc))) +
-
-  scale_fill_manual(values = palette5,
-                    labels = qBr(allTracts.group, "medHHInc"),
-                    name = "Income\n(Quintile Breaks)") +
-  facet_wrap(~TOD + year) + 
-  labs(title = "Income", subtitle = "Boston") +
-  mapTheme() + 
-  theme(plot.title = element_text(size=18))
-
-#4: No Vehicle Map
-ggplot() +
-  geom_sf(data=st_union(allTractsBos)) +
-  geom_sf(data = allTracts.group, aes(fill = q5(pctNoVehicle))) +
-  scale_fill_manual(values = palette5,
-                    labels = qBr(allTracts.group, "pctNoVehicle"),
-                    name = "No Vehicle\n(Quintile Breaks)") +
-  facet_wrap(~TOD + year) + 
-  labs(title = "No Vehicle Households", subtitle = "Boston") +
-  mapTheme() + 
-  theme(plot.title = element_text(size=18))
-
-#5: Rent Map
-ggplot() +
-  geom_sf(data=st_union(allTractsBos)) +
-  geom_sf(data = allTracts.group, aes(fill = q5(Rent))) +
-  scale_fill_manual(values = palette5,
-                    labels = qBr(allTracts.group, "Rent"),
-                    name = "Rent\n(Quintile Breaks)") +
-  facet_wrap(~TOD + year) + 
-  labs(title = "Rent", subtitle = "Boston") +
-  mapTheme() + 
-  theme(plot.title = element_text(size=18))
 
 ###########################TOD Indicator Tables################################
 
@@ -655,59 +647,56 @@ allTracts.Summary %>%
     plotTheme() + theme(legend.position="bottom")
 
 # Examining six submarkets
-## let's do two intersections for simplicity's sake - Downtown crossing and State stations
-### these two spots have the most intersecting lines + are at the center of downtown region
-#State Station Intersection
+
 downtown <-
   st_intersection(
-    st_buffer(filter(mbtaNode, line == "BLUE"), 2640) %>% st_union(),
-    st_buffer(filter(mbtaNode, line == "ORANGE"), 2640) %>% st_union(),
-    st_buffer(filter(mbtaNode, line == "RED"), 2640) %>% st_union(),
-    st_buffer(filter(mbtaNode, line == "SILVER"), 2640) %>% st_union(),
-    st_buffer(filter(mbtaNode, line == "GREEN"), 2640) %>% st_union()) %>%
+    st_buffer(filter(bosStations, line == "ORANGE"), 2640) %>% st_union(),
+    st_buffer(filter(bosStations, line == "RED"), 2640) %>% st_union(),
+    st_buffer(filter(bosStations, line == "SILVER"), 2640) %>% st_union()) %>%
   st_sf() %>%
-  mutate(Submarket = "Downtown")
+  mutate(Submarket = "downtown")
 
-#not sure where are the state stations?
 blue <-
-  st_buffer(filter(mbtaNode, line == "BLUE"), 2640) %>% st_union() %>%
+  st_buffer(filter(bosStations, line == "BLUE"), 2640) %>% st_union() %>%
   st_sf() %>%
   st_difference(downtown) %>%
-  mutate(Submarket = "Blue")
+  mutate(Submarket = "blue")
 
 orange <-
-  st_buffer(filter(mbtaNode, line == "ORANGE"), 2640) %>% st_union() %>%
+  st_buffer(filter(bosStations, line == "ORANGE"), 2640) %>% st_union() %>%
   st_sf() %>%
   st_difference(downtown) %>%
-  mutate(Submarket = "Orange")
+  mutate(Submarket = "orange")
 
 red <-
-  st_buffer(filter(mbtaNode, line == "RED"), 2640) %>% st_union() %>%
+  st_buffer(filter(bosStations, line == "RED"), 2640) %>% st_union() %>%
   st_sf() %>%
   st_difference(downtown) %>%
-  mutate(Submarket = "Red")
+  mutate(Submarket = "red")
 
 silver <-
-  st_buffer(filter(mbtaNode, line == "SILVER"), 2640) %>% st_union() %>%
+  st_buffer(filter(bosStations, line == "SILVER"), 2640) %>% st_union() %>%
   st_sf() %>%
   st_difference(downtown) %>%
-  mutate(Submarket = "Silver")
+  mutate(Submarket = "silver")
 
 green <-
-  st_buffer(filter(mbtaNode, line == "GREEN"), 2640) %>% st_union() %>%
+  st_buffer(filter(bosStations, line == "GREEN"), 2640) %>% st_union() %>%
   st_sf() %>%
   st_difference(downtown) %>%
-  mutate(Submarket = "Green")
+  mutate(Submarket = "green")
 
-sixMarkets <- rbind(silver, red, green, orange, blue, downtown)
+sixMarkets <- rbind(downtown, silver, red, green, orange, blue)
 
 #problem: can't see downtown on the map?
+##AD: silver is covering it, i'm not sure why we aren't able to get rid of the overlap..
 ggplot() + 
   geom_sf(data=st_union(allTractsBos)) +
-  geom_sf(data=sixMarkets, aes(colour = Submarket), fill = "transparent", show.legend = "point", size= 1) +
-  scale_colour_manual(values = c("gray","red","green","orange","blue","yellow")) +
+  geom_sf(data=silver, aes(colour = Submarket), show.legend = "point", size= 1) +
+  scale_colour_manual(values = c("blue","black","green","orange","red","gray")) +
   labs(title="six submarkets", subtitle="Boston, MA", caption="Figure 1.3") +
   mapTheme()
+
 # You can then bind these buffers to tracts and map them or make small multiple plots
 
 allTracts.sixMarkets <-
@@ -730,25 +719,25 @@ ggplot() +
 
 #spread goes long to wide, gather opposite
 allTracts.sixMarkets.Summary <- 
-  st_drop_geometry(allTracts.group) %>%
-  group_by(year, TOD) %>%
+  st_drop_geometry(allTracts.sixMarkets) %>%
+  group_by(year, Submarket) %>%
   summarize(Rent = mean(Rent, na.rm = T),
             Population = mean(population, na.rm = T),
             pctBach = mean(pctBach, na.rm = T),
             pctNoVehicle = mean(pctNoVehicle, na.rm = T),
             MedHHInc = mean(medHHInc, na.rm = T))
 
-kable(allTracts.Summary) %>%
+kable(allTracts.sixMarkets.Summary) %>%
   kable_styling() %>%
   footnote(general_title = "\n",
            general = "Table 2.3")
 
 ########change to long form######
 allTracts.sixMarkets.Summary %>%
-  unite(year.TOD, year, TOD, sep = ": ", remove = T) %>%
-  gather(Variable, Value, -year.TOD) %>%
+  unite(year.Submarket, year, Submarket, sep = ": ", remove = T) %>%
+  gather(Variable, Value, -year.Submarket) %>%
   mutate(Value = round(Value, 2)) %>%
-  spread(year.TOD, Value) %>%
+  spread(year.Submarket, Value) %>%
   kable() %>%
   kable_styling() %>%
   footnote(general_title = "\n",
@@ -758,11 +747,11 @@ allTracts.sixMarkets.Summary %>%
 ###########################TOD Indicator Plots##################################
 
 allTracts.sixMarkets.Summary %>%
-  gather(Variable, Value, -year, -TOD) %>%
-  ggplot(aes(year, Value, fill = TOD)) +
+  gather(Variable, Value, -year, -Submarket) %>%
+  ggplot(aes(year, Value, fill = Submarket)) +
   geom_bar(stat = "identity", position = "dodge") +
   facet_wrap(~Variable, scales = "free", ncol=5) +
-  scale_fill_manual(values = c("#bae4bc", "#0868ac")) +
+  scale_fill_manual(values = c("#335BFF", "#000000", "#34D539", "#F9FD0A", "#FF7000", "#FF0000", "#CDCDCD")) +
   labs(title = "Indicator differences across time and space") +
   plotTheme() + theme(legend.position="bottom")
 
@@ -778,11 +767,11 @@ troi_rent <- rbind(selectCentroids10[,c(1,3)], selectCentroids18[,c(1,3)])
 oitroi_rent.group <- st_centroid(troi_rent)
 
 ggplot() + 
-  geom_sf(data=st_union(allTractsBos)) +
+  geom_sf(data=st_union(allTracts.group)) +
   geom_sf(data = buffer, fill = "white") + 
   geom_sf(data = oitroi_pop.group, aes(size = population), shape = 21, 
-      fill = "lightblue", alpha = 0.5, show.legend = "point") + 
-  scale_size_continuous(range = c(1, 12))+
+      fill = "lightblue", alpha = 1, show.legend = "point") + 
+  scale_size_continuous(range = c(0.1, 6))+
   facet_wrap(~year)+
   labs(title = "Population 2010-2018") +
   mapTheme() + 
@@ -792,8 +781,8 @@ ggplot() +
   geom_sf(data=st_union(allTractsBos)) +
   geom_sf(data = buffer, fill = "white") + 
   geom_sf(data = oitroi_rent.group, aes(size = Rent), shape = 21, 
-          fill = "pink", alpha = 0.5, show.legend = "point") + 
-  scale_size_continuous(range = c(1, 12))+
+          fill = "pink", alpha = 1, show.legend = "point") + 
+  scale_size_continuous(range = c(0.1, 6))+
   facet_wrap(~year)+
   labs(title = "Rent 2010-2018") +
   mapTheme() + 
@@ -893,6 +882,7 @@ crime2012 <- st_read("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime2012.
 crime2012_sf <- st_as_sf(crime2012, coords = c("Location"), crs = 4326) %>%
   st_transform('ESRI:102686')
 #are we doing 2012-2019 in crime data?
+# AD: I think so
 #crime2012 <- st_read("E:/Upenn/CPLN508/TOD-Assignment/Crime2012.geojson") %>% st_transform(st_crs(allTractsBos))
 #crime2019 <- st_read("E:/Upenn/CPLN508/TOD-Assignment/Crime2019.geojson") %>% st_transform(st_crs(allTractsBos))
 
