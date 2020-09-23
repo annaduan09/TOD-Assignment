@@ -879,6 +879,7 @@ p + geom_line(aes(colour = x))
 should_stop(p + geom_line(aes(colour = x), linetype=2))
 ####################################Crime Data############################################
 crime2012 <- st_read("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime2012.geojson") %>% st_transform(st_crs(allTractsBos))
+crime2019 <- st_read("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime2019.geojson") %>% st_transform(st_crs(allTractsBos))
 crime2012_sf <- st_as_sf(crime2012, coords = c("Location"), crs = 4326) %>%
   st_transform('ESRI:102686')
 #are we doing 2012-2019 in crime data?
