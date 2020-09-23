@@ -878,17 +878,15 @@ p + geom_line(aes(colour = x))
 # But this doesn't
 should_stop(p + geom_line(aes(colour = x), linetype=2))
 ####################################Crime Data############################################
-crime2012 <- st_read()
-#are we doing 2012-2019 in crime data?
-# AD: I think so
-#crime2012 <- st_read("E:/Upenn/CPLN508/TOD-Assignment/Crime2012.geojson") %>% st_transform(st_crs(allTractsBos))
-#crime2019 <- st_read("E:/Upenn/CPLN508/TOD-Assignment/Crime2019.geojson") %>% st_transform(st_crs(allTractsBos))
+#AD: changed file name and now read csv - easier to modify the geometry this way
 
-crime12 <- read.csv("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime12.csv", header = TRUE, sep = ",", quote = "\"",
-         dec = ".")
-crime19 <- read.csv("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime18.csv", header = TRUE, sep = ",", quote = "\"",
-                       dec = ".")
+crime12.sf <- st_as_sf(crime12, coords = c("LON", "LAT"), crs = 4326, agr = "constant") %>% 
+  st_transform(st_crs(allTracts.group))
 
+crime18.sf <- st_as_sf(crime18, coords = c("LON", "LAT"), crs = 4326, agr = "constant")  %>% 
+  st_transform(st_crs(allTracts.group))
 
-crime12.sf <- st_as_sf(crime12, coords = c("LON", "LAT"), crs = 4326, agr = "constant")
+plot(crime12.sf)
+plot(crime18.sf)
+
 
