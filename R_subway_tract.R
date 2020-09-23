@@ -770,7 +770,7 @@ ggplot() +
   geom_sf(data=st_union(allTracts.group)) +
   geom_sf(data = buffer, fill = "white") + 
   geom_sf(data = oitroi_pop.group, aes(size = population), shape = 21, 
-      fill = "lightblue", alpha = 1, show.legend = "point") + 
+      fill = "lightblue", alpha = 0.8, show.legend = "point") + 
   scale_size_continuous(range = c(0.1, 6))+
   facet_wrap(~year)+
   labs(title = "Population 2010-2018") +
@@ -780,9 +780,9 @@ ggplot() +
 ggplot() + 
   geom_sf(data=st_union(allTractsBos)) +
   geom_sf(data = buffer, fill = "white") + 
-  geom_sf(data = oitroi_rent.group, aes(size = Rent), shape = 21, 
+  geom_sf(data = oitroi_rent.group, aes(size = Rent), shape = 21, color = "transparent",
           fill = "pink", alpha = 1, show.legend = "point") + 
-  scale_size_continuous(range = c(0.1, 6))+
+  scale_size_continuous(range = c(0.05, 6))+
   facet_wrap(~year)+
   labs(title = "Rent 2010-2018") +
   mapTheme() + 
@@ -804,7 +804,7 @@ for (i in seq(0.5,10, by = 0.5)){
   
   a <- st_union(st_buffer(bosStations, i*5280)) %>% st_sf()
   b <-
-    st_centroid(trants10)[a,] %>%
+    st_centroid(tracts10)[a,] %>%
     st_drop_geometry() %>%
     left_join(dplyr::select(tracts10, GEOID)) %>%
     st_sf() %>%
