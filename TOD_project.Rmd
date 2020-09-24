@@ -2,7 +2,10 @@
 title: "TOD Assignment"
 author: "Anna Duan, Bingchu Chen"
 date: "9/20/2020"
-output: html_document
+output: 
+    html_document: 
+        code_folding: hide
+#revisit to add table of contents, hide code chunks, etc
 ---
 ## Introduction
 
@@ -348,7 +351,7 @@ allTracts.group <-
 ## 1. Does TOD attract growth in population and rent?
 If the hypothesis that transit-rich neighborhoods are desirable, it is then expected that neighborhoods close to a transit station should experience growth in population and rent as more people are drawn to them and willing to pay a premium to live near transit. The maps below document changes in rent and population in TOD tracts (within 0.5 miles of a transit station) between 2010 and 2018. In figure 1.1, we see substantial population growth in census tracts in the downtown area, near the intersections of the subway lines. Similarly, in figure 1.2, there are increases in rent citywide, with the most marked change occurring in the downtown area. Based on this, it appears that over time TOD neighborhoods in Boston are growing in population and experiencing increases in land value.
 
-```{r graduated symbol maps, include = TRUE}
+```{r graduated symbol maps, message=FALSE, warning=FALSE, include=}
 centectroi10_pop <- st_centroid(selectCentroids10[,1])
 centectroi18_pop <- st_centroid(selectCentroids18[,1])
 troi_pop <- rbind(selectCentroids10[,1:2], selectCentroids18[,1:2]) 
@@ -380,7 +383,6 @@ ggplot() +
   mapTheme() + 
   theme(plot.title = element_text(size=22))
 ```
-
 
 ## 2. How does TOD affect other neighborhood characteristics?
 Now that we know TOD neighborhoods in Boston have been growing, the next step in determining whether TOD leads to greater growth and desirability is to compare TOD neighborhoods to non-TOD neighborhoods. In this section, we have also added additional neighborhood characteristics to our analysis: pctBach is the share of adults with Bachelor's degrees, MedHHInc is median household income, and pctNoVehicle is the share of households which don't own a private vehicle. Neighborhoods which are desirable should experience growth in both pctBach and MedHHInc over time. Neighborhoods which experience pctNoVehicle growth may be more amenable to walking or using public transit. 
@@ -439,7 +441,7 @@ ggplot(allTracts.group)+
   geom_sf(aes(fill = q5(pctNoVehicle))) +
   geom_sf(data = buffer, fill = "transparent", color = "red")+
   scale_fill_manual(values = palette5,
-                    labels = qBr(allTracts.group, "pctNoVehicle"),
+                    labels = qBr(allTracts.group %>% mutate(pctNoVehicle_100 = pctNoVehicle *100), "pctNoVehicle_100"),
                     name = "% Households\n(Quintile Breaks, TOD in Red)") +
   labs(title = "Share of Households without Vehicle 2010 - 2018", subtitle = "Boston, MA", caption="Figure 2.4") +
   facet_wrap(~year)+
