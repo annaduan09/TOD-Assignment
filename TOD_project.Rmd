@@ -20,8 +20,12 @@ Greater Boston area. In the past decade, [MBTA] (https://www.mbtarealty.com/tran
 This makes Boston an interesting case for studying the effects of TOD. In this 
   brief, we analyze the relationship between TOD and neighborhood value. 
  
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
 #################################### Libraries##################################
 #install.packages("tidyverse")
 library(tidyverse)
@@ -351,7 +355,7 @@ allTracts.group <-
 ## 1. Does TOD attract growth in population and rent?
 If the hypothesis that transit-rich neighborhoods are desirable, it is then expected that neighborhoods close to a transit station should experience growth in population and rent as more people are drawn to them and willing to pay a premium to live near transit. The maps below document changes in rent and population in TOD tracts (within 0.5 miles of a transit station) between 2010 and 2018. In figure 1.1, we see substantial population growth in census tracts in the downtown area, near the intersections of the subway lines. Similarly, in figure 1.2, there are increases in rent citywide, with the most marked change occurring in the downtown area. Based on this, it appears that over time TOD neighborhoods in Boston are growing in population and experiencing increases in land value.
 
-```{r graduated symbol maps, message=FALSE, warning=FALSE, include=}
+```{r Graduated Symbol Maps, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, include=TRUE}
 centectroi10_pop <- st_centroid(selectCentroids10[,1])
 centectroi18_pop <- st_centroid(selectCentroids18[,1])
 troi_pop <- rbind(selectCentroids10[,1:2], selectCentroids18[,1:2]) 
@@ -385,11 +389,11 @@ ggplot() +
 ```
 
 ## 2. How does TOD affect other neighborhood characteristics?
-Now that we know TOD neighborhoods in Boston have been growing, the next step in determining whether TOD leads to greater growth and desirability is to compare TOD neighborhoods to non-TOD neighborhoods. In this section, we have also added additional neighborhood characteristics to our analysis: pctBach is the share of adults with Bachelor's degrees, MedHHInc is median household income, and pctNoVehicle is the share of households which don't own a private vehicle. Neighborhoods which are desirable should experience growth in both pctBach and MedHHInc over time. Neighborhoods which experience pctNoVehicle growth may be more amenable to walking or using public transit. 
+Now that we know TOD neighborhoods in Boston grew in population between 2010 and 2018, the next step is to compare TOD neighborhoods to non-TOD neighborhoods. In this section, we have also added additional neighborhood characteristics to our analysis: pctBach is the share of adults with Bachelor's degrees, MedHHInc is median household income, and pctNoVehicle is the share of households which don't own a private vehicle. Neighborhoods which are desirable should experience growth in both pctBach and MedHHInc over time. Neighborhoods which experience pctNoVehicle growth may be more amenable to walking or using public transit. 
 
 ### Population
 Citywide, TOD areas have some of the most populated census tracts, although some non-TOD tracts in the South have populations in the highest quintile. In terms of growth, however, the greatest population growth appears to occur within TOD areas, in the downtown region. While this supports the idea that TOD neighborhoods attract growth, the extent to which TOD influenced this growth is unclear because the downtown area may also be attractive for a range of other reasons including business, recreation, and culture.
-```{r population, include=TRUE}
+```{r Population, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, include=TRUE}
 ggplot(allTracts.group)+
   geom_sf(data = st_union(allTractsBos))+
   geom_sf(aes(fill = q5(population))) +
@@ -405,13 +409,13 @@ ggplot(allTracts.group)+
 
 ### Bachelor's Degrees
 The share of adults holding Bachelor's Degrees is highest in the TOD tracts, with a few exceptions in the South. With regards to growth, neither TOD and non-TOD tracts improve very significantly between 2010 and 2018. This result suggests that tracts with TOD are likely to have more educated residents, although it is unclear whehter the presence of TOD is what attracts them.
-```{r bachelors, include=TRUE}
+```{r Bachelors Degrees, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, include=TRUE}
 ggplot(allTracts.group)+
   geom_sf(data = st_union(allTractsBos))+
   geom_sf(aes(fill = q5(pctBach))) +
   geom_sf(data = buffer, fill = "transparent", color = "red")+
   scale_fill_manual(values = palette5,
-                    labels = qBr(allTracts.group, "pctBach"),
+                    labels = qBr(allTracts.group %>% mutate(pctBach_100 = pctBach *100), "pctBach_100"),
                     name = "% >25 Years with Bachelor's\n(Quintile Breaks, TOD in Red)") +
   labs(title = "Share of Adults with Bachelor's Degree 2010 - 2018", subtitle = "Boston, MA", caption="Figure 2.2") +
   facet_wrap(~year)+
@@ -420,7 +424,7 @@ ggplot(allTracts.group)+
 ```
 ### Median Household Income
 Figure 2.3 shows that in 2010, the neighborhoods with the highest median incomes were non-TOD. However, in 2018, numerous tracts within the TOD area have transitioned to the highest median income category. This growth could mean that TOD areas attract wealthier households, although this growth could also be the result of the multiplier effect brought by downtown development as most of the TOD tracts which experienced growth are within the downtown area.
-```{r income, include=TRUE}
+```{r Median Household Income, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, include=TRUE}
 ggplot(allTracts.group)+
   geom_sf(data = st_union(allTractsBos))+
   geom_sf(aes(fill = q5(medHHInc))) +
@@ -435,7 +439,7 @@ ggplot(allTracts.group)+
 ```
 ### Households without Vehicles
 Finally, map 2.4 shows a significant difference in vehicle ownership in TOD and non-TOD neighborhoods Almost all of the TOD tracts are in the highest category of pctNoVehicle, whereas most of the non-TOD tracts have lower shares. This suggests that TOD neighborhoods are indeed more attractive to households that don't own cars due to their walkability and transit access.
-```{r noVehicle, include=TRUE}
+```{r Households without Vehicles, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, include=TRUE}
 ggplot(allTracts.group)+
   geom_sf(data = st_union(allTractsBos))+
   geom_sf(aes(fill = q5(pctNoVehicle))) +
@@ -450,7 +454,7 @@ ggplot(allTracts.group)+
 ```
 
 Below, the previous trends are summarized in table 2.1 and 2.2. In 2.2, the data is presented in long form.
-```{r table, include=TRUE}
+```{r Neighborhood Characteristics Tables, message=FALSE, warning=FALSE, include=TRUE}
 #Summarize allTracts.group
 allTracts.Summary <- 
   st_drop_geometry(allTracts.group) %>%
@@ -479,7 +483,7 @@ allTracts.Summary %>%
 ```
 
 For a clearer visual comparison of these trends, let us plot them in a group bar plot. First, we see that other than pctNoVehicle, all  variables have increased citywide. In TOD neighborhoods, as noted earlier, residents are more educated, pay higher rent, and have slightly higher income in 2018. Population is lower in TOD neighborhoods in 2018, and these neighborhoods see less population growth on average than non-TOD areas, contradicting the hypothesis that transit-rich neighborhoods see the most population growth. However, the higher education attainment, income, and rent in these tracts indicate that they are attractive and that people will pay a premium for them. Most notable is the difference in pctNoVehicle in TOD and non-TOD neighborhoods. While it is decreasing citywide, TOD tracts still have more than 10% more households without vehicles, confirming that their transit options make it viable to not own a car.
-```{r barPlot, include=TRUE}
+```{r Neighborhood Characteristics Group Bar Plot, message=FALSE, warning=FALSE, include=TRUE}
 
 ###########################TOD Indicator Plots##################################
 allTracts.Summary %>%
@@ -495,7 +499,7 @@ allTracts.Summary %>%
 To further analyze the relationship between TOD and neighborhood desirability, we will look at the relationship between rent and distance from subway stations. This method allows us to look at the relationship between transit and housing without cutting off census tracts outside of the 0.5 mile buffer. 
   In both 2010 and 2018, the highest rent is at the shortest distance from transit stations, within 0.5miles, and it drops until 1 mile from stations. After this, however, both plots display two rent price peaks at roughly 1.5 and 3.2 miles. This aligns with the previous maps and group plots, suggesting that while transit rich neighborhoods have the highest rent prices due to their desirability, transit is not the dominant factor influencing rent prices, particularly outside of the 0.5 mile TOD buffer.
 
-```{r geom_line, include=TRUE}
+```{r Distance from Transit vs Rent Geom_line Plot, message=FALSE, warning=FALSE, include=TRUE}
 multiBuffers <- multipleRingBuffer(bosStations, 4, 0.4) %>% st_sf()
 # 2010
 rent_dis10 <- data.frame(
@@ -569,7 +573,7 @@ Another proposed benefit of TOD is neighborhood safety. With denser, walkable, a
 
 At a glance, it appears that TOD tracts experience a higher rate of robberies, disproving the "eyes on the street" idea. However, it is important to consider another factor that may affect crime: rent. Research has suggested that lower rent is associated with higher crime rates. On the map it appears that TOD and non-TOD tracts that have rents in the lower categories have similar amounts of crime. However, it appears that many TOD tracts in the highest rent category do not have incidences of robberies, while most of the high-rent non-TOD tracts have some robberies. However, another confounding factor is that most TOD tracts are in the downtown area, which can often have the highest crime in a city. Overall, TOD tracts in Boston don't appear to be safer than non-TOD tracts due to the complicated factors influencing crime. However, it appears that neighborhoods which have both high rent and TOD experience less crime. 
 
-```{r crime, include=TRUE}
+```{r crime, fig.height=6, fig.width=10, message=FALSE, warning=FALSE, include=TRUE}
 crime12 <- read.csv("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime12.csv", header = TRUE, sep = ",", quote = "\"",
          dec = ".")
 crime18 <- read.csv("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime18.csv", header = TRUE, sep = ",", quote = "\"",
