@@ -5,9 +5,28 @@ date: "9/20/2020"
 output: html_document
 ---
 ## requirements
-Provide a brief motivation at the beginning, annotate each visualization appropriately, and then provide brief policy-relevant conclusions.
 
-Do households value transit-rich neighborhoods compared to others? How certain can you be about your conclusions given some of the spatial biases we've discussed? 
+Transit Oriented Development (TOD) is a transportation planning concept which promotes
+developing communities around public transportation. This is believed to improve the 
+quality of life of residents and generate business by making cities more walkable, clean, and dense. On the macro level, it is believed to increase land value
+and make transit systems more efficient. In recent years, a number of cities have invested in TOD, including Boston, Massachusetts. In the past decade, the Massachusetts
+Bay Transportation Authority (MBTA)
+
+https://www.mbtarealty.com/transit-oriented-development/
+
+, which operates public transportation in the 
+Greater Boston region, has worked with private developers and the city to support
+more than 50 TOD projects around its stations. 
+http://www.tod.org/
+- widely known that households value transit-rich neighborhoods
+  - benefits
+  - example of current work in this area (MPC)
+  - example of cities
+  - background of Boston's TOD, station/line setup
+  
+  This makes Boston an interesting case for studying the effects of TOD. In this 
+  brief, we analyze the relationship between TOD and neighborhood value. 
+
 
 1.Show your data wrangling work.
 ```{r setup, include=FALSE}
