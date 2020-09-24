@@ -4,27 +4,17 @@ author: "Anna Duan, Bingchu Chen"
 date: "9/20/2020"
 output: html_document
 ---
-## requirements
+## Introduction
 
 Transit Oriented Development (TOD) is a transportation planning concept which promotes
 developing communities around public transportation. This is believed to improve the 
 quality of life of residents and generate business by making cities more walkable, clean, and dense. On the macro level, it is believed to increase land value
-and make transit systems more efficient. In recent years, a number of cities have invested in TOD, including Boston, Massachusetts. In the past decade, the Massachusetts
-Bay Transportation Authority (MBTA)
+and make transit systems more efficient. In recent years, a number of cities have invested in TOD, including Boston, Massachusetts. Boston, Massachusetts has one of the 
+most developed public transportation systems in the country, with the Massachusetts Bay
+Transportation Authority operating subway, trolley, bus, and boat services within the
+Greater Boston area. In the past decade, [MBTA] (https://www.mbtarealty.com/transit-oriented-development/) has worked with private developers and the city to support more than 50 TOD projects near its stations. 
 
-https://www.mbtarealty.com/transit-oriented-development/
-
-, which operates public transportation in the 
-Greater Boston region, has worked with private developers and the city to support
-more than 50 TOD projects around its stations. 
-http://www.tod.org/
-- widely known that households value transit-rich neighborhoods
-  - benefits
-  - example of current work in this area (MPC)
-  - example of cities
-  - background of Boston's TOD, station/line setup
-  
-  This makes Boston an interesting case for studying the effects of TOD. In this 
+This makes Boston an interesting case for studying the effects of TOD. In this 
   brief, we analyze the relationship between TOD and neighborhood value. 
 
 
