@@ -562,7 +562,10 @@ ggplot(rent_dis18, aes(x=distance, y=Mean_Rent)) +
   scale_color_brewer(palette="Paired")+theme_minimal()
 ```
 ## 4. Are TOD Neighborhoods Safer?
-Another proposed benefit of TOD is neighborhood safety. With denser, walkable, and transit-rich neighborhoods, there are more people on the street. This is based in the notion of "eyes on the street," an idea termed by the great urbanist Jane Jacobs, which suggests that dense, lively neighborhoods where residents are out on the streets are safer because of the many people who witness the activity in the area. To test this idea, we plot the incidences of a common street crime category, robbery. 
+Another proposed benefit of TOD is neighborhood safety. With denser, walkable, and transit-rich neighborhoods, there are more people on the street. This is based in the notion of "eyes on the street," an idea termed by the great urbanist Jane Jacobs, which suggests that dense, lively neighborhoods where residents are out on the streets are safer because of the many people who witness the activity in the area. To test this idea, we plot the incidences of a common street crime category, robbery.
+
+
+At a glance, it appears that TOD tracts experience a higher rate of robberies, disproving the "eyes on the street" idea. However, it is important to consider another factor that may affect crime: rent. Research has suggested that lower rent is associated with higher crime rates. On the map it appears that TOD and non-TOD tracts that have rents in the lower categories have similar amounts of crime. However, it appears that many TOD tracts in the highest rent category do not have incidences of robberies, while most of the high-rent non-TOD tracts have some robberies. However, another confounding factor is that most TOD tracts are in the downtown area, which can often have the highest crime in a city. Overall, TOD tracts in Boston don't appear to be safer than non-TOD tracts due to the complicated factors influencing crime. However, it appears that neighborhoods which have both high rent and TOD experience less crime. 
 
 ```{r crime, include=TRUE}
 crime12 <- read.csv("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime12.csv", header = TRUE, sep = ",", quote = "\"",
@@ -582,47 +585,45 @@ crime18.sf <- st_as_sf(crime18, coords = c("LON", "LAT"), crs = 4326, agr = "con
 
 ################################Relate Crime to Census Tracts##############################
 
-#2018
-ggplot() +   
- # geom_sf(data=st_union(allTractsBos)) +
-  scale_fill_manual(values = palette5,
-                    labels = qBr(allTracts.group, "Rent.inf"),
-                    name = "Rent\n(Quintile Breaks)") +
-  facet_wrap(~TOD) +
-  mapTheme() +
-  geom_sf(data=allTracts.group, aes(fill = q5(Rent.inf))) +
-  geom_sf(data=crime18.sf, show.legend = "point", size= 1, color = "white") +
-  labs(title="Crime, Transit Access, and Rent, 2018", subtitle="Boston, MA", caption="Figure 7.1") +
-#  geom_sf(data = buffer, fill = "transparent", color = "red") +
-  mapTheme()
-
-
 #2012
-ggplot() +   
+#ggplot() +   
   # geom_sf(data=st_union(allTractsBos)) +
-  geom_sf(data=allTracts.group, aes(fill = q5(Rent.inf))) +
-  geom_sf(data=crime12.sf, show.legend = "point", size= 1, color = "white") +
+#  geom_sf(data=allTracts.group, aes(fill = q5(Rent.inf))) +
+ # geom_sf(data=crime12.sf, show.legend = "point", size= 0.4, color = "white") +
   #geom_sf(data = buffer, fill = "transparent", color = "red") +
-  scale_fill_manual(values = palette5,
-                    labels = qBr(allTracts.group, "Rent.inf"),
-                    name = "Rent\n(Quintile Breaks)") +
-  facet_wrap(~TOD) +
-  labs(title="Crime, Transit Access, and Rent, 2012", subtitle="Boston, MA", caption="Figure 7.2") +
-  mapTheme()
+#  scale_fill_manual(values = palette5,
+#                    labels = qBr(allTracts.group, "Rent.inf"),
+ #                   name = "Rent\n(Quintile Breaks)") +
+#  facet_wrap(~TOD) +
+#  labs(title="Crime, Transit Access, and Rent, 2012", subtitle="Boston, MA", caption="Figure 7.2") +
+#  mapTheme()
 
-#or we combine together?
-
-#crime.sf <- rbind(crime12.sf, crime18.sf)
-
+#2018
 #ggplot() +   
  # geom_sf(data=st_union(allTractsBos)) +
- #scale_fill_manual(values = palette5,
+ # scale_fill_manual(values = palette5,
  #                   labels = qBr(allTracts.group, "Rent.inf"),
- #                   name = "Rent\n(Quintile Breaks)") +
- # geom_sf(data=allTracts.group, aes(fill = q5(Rent.inf))) +
- # geom_sf(data=crime.sf, show.legend = "point", size= 0.5, color = "yellow") +
- # labs(title="Crime Relation with Transit Access, 2012&2018", subtitle="Boston, MA", caption="Figure 2.5") +
- # facet_wrap(~TOD+year) +
- # mapTheme() 
+  #                  name = "Rent\n(Quintile Breaks)") +
+ # facet_wrap(~TOD) +
+ # mapTheme() +
+  #geom_sf(data=allTracts.group, aes(fill = q5(Rent.inf))) +
+ # geom_sf(data=crime18.sf, show.legend = "point", size= 0.4, color = "white") +
+#  labs(title="Crime, Transit Access, and Rent, 2018", subtitle="Boston, MA", caption="Figure 7.1") +
+#  geom_sf(data = buffer, fill = "transparent", color = "red") +
+#  mapTheme()
+
+
+crime.sf <- rbind(crime12.sf, crime18.sf)
+
+ggplot() +   
+#  geom_sf(data=st_union(allTractsBos)) +
+ scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.group, "Rent.inf"),
+                    name = "Rent\n(Quintile Breaks)") +
+  geom_sf(data=allTracts.group, aes(fill = q5(Rent.inf))) +
+  geom_sf(data=crime.sf, show.legend = "point", size= 0.1, color = "white") +
+  labs(title="Crime, Transit Access, and Rent, 2012 & 2018", subtitle="Boston, MA", caption="Figure 2.5") +
+  facet_wrap(~TOD) +
+  mapTheme() 
 ```
 
