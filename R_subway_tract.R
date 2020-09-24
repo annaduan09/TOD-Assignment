@@ -231,9 +231,6 @@ plot(tracts10_renterHH[,4])
 
 
 ##############################long form to wide form###############################
-#have to change the original file to oritracts because we change the variables names here, then if we go back 
-#to run the plots, it won't work because the variabes are no long "B...."
-
 tracts10 <- 
   oritracts10 %>%
   dplyr::select( -NAME, -moe) %>%
@@ -255,7 +252,6 @@ st_drop_geometry(tracts10)[1:3,]
 #2 25025000201       3636      834            1235            2212    68010             37            221 1346
 #3 25025000202       3899      680            1573            2267    54151             58            206 1223
 ###################################mutate##########################################
-#the variables are selected from the table above
 tracts10 <- 
   tracts10 %>%
   mutate(pctBach = ifelse(population > 0, bachelor / population, 0),
@@ -519,7 +515,7 @@ ggplot(selectCentroids18)+
   theme(plot.title = element_text(size=22))
 
 ###########################INDICATOR MAPS########################################
-#In other words, $100 in 2010 is equivalent in purchasing power to about $115.21 in 2018
+#$100 in 2010 is equivalent in purchasing power to about $115.21 in 2018
 allTracts.group <- 
   rbind(
     st_centroid(allTractsBos)[buffer,] %>%
