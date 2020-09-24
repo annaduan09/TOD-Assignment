@@ -351,12 +351,15 @@ allTracts.group <-
       mutate(TOD = "Non-TOD")) %>%
   mutate(Rent.inf = ifelse(year == "2010", Rent * 1.1521, Rent))
 ```
+
+
+2.Four small-multiple (2000 & 2017+) visualizations comparing four selected Census variables across time and space (TOD vs. non-TOD).
 ## TOD and neighborhood indicators 
 First, we need to look at how Transit Oriented Development correlates with features in 
 communities.
 
 ### Population
-If TOD is a desirable trait in a neighorhood, then transit-rich neighborhoods should see an increase in population over time.
+If TOD is a desirable trait in a neighborhood, then transit-rich neighborhoods should see an increase in population over time. However, since the TOD area where transit lines intersect also tend to be the city downtown area. Transit may not be the reason behind the population boost.
 ```{r population, include=TRUE}
 ggplot(allTracts.group)+
   geom_sf(data = st_union(allTractsBos))+
@@ -365,13 +368,13 @@ ggplot(allTracts.group)+
   scale_fill_manual(values = palette5,
                     labels = qBr(allTracts.group, "population"),
                     name = "Population\n(Quintile Breaks, TOD in Red)") +
-  labs(title = "Total Population 2010-2018", subtitle = "Boston") +
+  labs(title = "Total Population 2010&2018", subtitle = "Boston", caption="Figure 2.1") +
   facet_wrap(~year)+
   mapTheme() + 
   theme(plot.title = element_text(size=22))
 ```
 
-For share of adults with bachelor's degrees, it is expected that the more desirable a neighborhood is, the higher this number will be. 
+For share of adults with bachelor's degrees, it is expected that the more desirable a neighborhood is, the higher this number will be. However, it could also be that 
 ```{r bachelors, include=TRUE}
 ggplot(allTracts.group)+
   geom_sf(data = st_union(allTractsBos))+
@@ -380,12 +383,13 @@ ggplot(allTracts.group)+
   scale_fill_manual(values = palette5,
                     labels = qBr(allTracts.group, "pctBach"),
                     name = "% Adults >25 Years with Bachelor's\n(Quintile Breaks, TOD in Red)") +
-  labs(title = "Share of Adults with Bachelor's Degree 2010-2018", subtitle = "Boston") +
+  labs(title = "Share of Adults with Bachelor's Degree 2010-2018", subtitle = "Boston", caption="Figure 2.2") +
   facet_wrap(~year)+
   mapTheme() + 
   theme(plot.title = element_text(size=22))
 ```
 
+For median household income in this area, it's expected that households living within the TOD area will see a higher growth in income than those who live in the non-TOD area. However, it could also be the result of the multiplier effect brought by the downtown development.
 ```{r income, include=TRUE}
 ggplot(allTracts.group)+
   geom_sf(data = st_union(allTractsBos))+
@@ -394,12 +398,13 @@ ggplot(allTracts.group)+
   scale_fill_manual(values = palette5,
                     labels = qBr(allTracts.group, "medHHInc"),
                     name = "Median HH Income\n(Quintile Breaks, TOD in Red)") +
-  labs(title = "Median Household Income 2010-2018", subtitle = "Boston") +
+  labs(title = "Median Household Income 2010-2018", subtitle = "Boston", caption="Figure 2.3") +
   facet_wrap(~year)+
   mapTheme() + 
   theme(plot.title = element_text(size=22))
 ```
 
+people owning less vehicles due to the developed subway system? This variable seems to have less to do with the subway development to me because the subway was built long ago and the effect it had on vehicles should be much smaller now. Should we change another variable?
 ```{r noVehicle, include=TRUE}
 ggplot(allTracts.group)+
   geom_sf(data = st_union(allTractsBos))+
@@ -408,12 +413,11 @@ ggplot(allTracts.group)+
   scale_fill_manual(values = palette5,
                     labels = qBr(allTracts.group, "pctNoVehicle"),
                     name = "% Households without Vehicle\n(Quintile Breaks, TOD in Red)") +
-  labs(title = "Share of Households without a Vehicle 2010-2018", subtitle = "Percentage") +
+  labs(title = "Share of Households without a Vehicle 2010-2018", subtitle = "Percentage", caption="Figure 2.4") +
   facet_wrap(~year)+
   mapTheme() + 
   theme(plot.title = element_text(size=22))
 ```
-
 
 
 3.One grouped bar plot making these same comparisons.
@@ -427,10 +431,25 @@ allTracts.Summary <-
             pctNoVehicle = mean(pctNoVehicle, na.rm = T),
             MedHHInc = mean(medHHInc, na.rm = T))
 
+###########################TOD Indicator Plots##################################
+
+allTracts.Summary %>%
+  gather(Variable, Value, -year, -TOD) %>%
+  ggplot(aes(year, Value, fill = TOD)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    facet_wrap(~Variable, scales = "free", ncol=5) +
+    scale_fill_manual(values = c("#bae4bc", "#0868ac")) +
+    labs(title = "Indicator differences across time and space", caption="Figure 3.1") +
+    plotTheme() + theme(legend.position="bottom")
+```
+
+
+4.One table making these same comparisons.
+```{r table, include=True}
 kable(allTracts.Summary) %>%
   kable_styling() %>%
   footnote(general_title = "\n",
-           general = "Table 2.2")
+           general = "Table 4.1")
 
 ########change to long form######
 allTracts.Summary %>%
@@ -441,27 +460,192 @@ allTracts.Summary %>%
   kable() %>%
   kable_styling() %>%
   footnote(general_title = "\n",
-           general = "Table 2.3")
-
-###########################TOD Indicator Plots##################################
-
-allTracts.Summary %>%
-  gather(Variable, Value, -year, -TOD) %>%
-  ggplot(aes(year, Value, fill = TOD)) +
-    geom_bar(stat = "identity", position = "dodge") +
-    facet_wrap(~Variable, scales = "free", ncol=5) +
-    scale_fill_manual(values = c("#bae4bc", "#0868ac")) +
-    labs(title = "Indicator differences across time and space") +
-    plotTheme() + theme(legend.position="bottom")
+           general = "Table 4.2")
 ```
 
 
-4.One table making these same comparisons.
-
-
 5.Create two graduated symbol maps of population and rent within 0.5 mile of each transit station. Google for more information, but a graduate symbol map represents quantities for each transit station proportionally.
+```{r graduated symbol maps, include = True}
+centectroi10_pop <- st_centroid(selectCentroids10[,1])
+centectroi18_pop <- st_centroid(selectCentroids18[,1])
+troi_pop <- rbind(selectCentroids10[,1:2], selectCentroids18[,1:2]) 
+oitroi_pop.group <- st_centroid(troi_pop)
+centectroi10_re <- st_centroid(selectCentroids10[,2])
+centectroi18_re <- st_centroid(selectCentroids18[,2])
+troi_rent <- rbind(selectCentroids10[,c(1,3)], selectCentroids18[,c(1,3)]) 
+oitroi_rent.group <- st_centroid(troi_rent)
+
+ggplot() + 
+  geom_sf(data=st_union(allTracts.group)) +
+  geom_sf(data = buffer, fill = "white") + 
+  geom_sf(data = oitroi_pop.group, aes(size = population), shape = 21, 
+      fill = "lightblue", alpha = 0.8, show.legend = "point") + 
+  scale_size_continuous(range = c(0.1, 6))+
+  facet_wrap(~year)+
+  labs(title = "Population 2010-2018", subtitle = "Boston, MA", caption="Figure 5.1") +
+  mapTheme() + 
+  theme(plot.title = element_text(size=22))
+
+ggplot() + 
+  geom_sf(data=st_union(allTractsBos)) +
+  geom_sf(data = buffer, fill = "white") + 
+  geom_sf(data = oitroi_rent.group, aes(size = Rent), shape = 21, color = "transparent",
+          fill = "pink", alpha = 1, show.legend = "point") + 
+  scale_size_continuous(range = c(0.05, 6))+
+  facet_wrap(~year)+
+  labs(title = "Rent 2010-2018", subtitle = "Boston, MA", caption="Figure 5.2") +
+  mapTheme() + 
+  theme(plot.title = element_text(size=22))
+```
 
 6.Create a geom_line plot that shows mean rent as a function of distance to subway stations (Figure x.x.x). To do this you will need to use the multipleRingBuffer function in the ppaR package.
+```{r geom_line, include=True}
+multiBuffers <- multipleRingBuffer(bosStations, 4, 0.4)
+
+# for 2010
+rent_dis10 <- data.frame(
+  distance = double(),
+  meanrent = double(),
+  stringsAsFactors=FALSE
+)
+
+for (i in seq(0.4,4, by = 0.4)){
+  
+  A <- st_union(st_buffer(bosStations, i*5280)) %>% st_sf()
+  a <- st_union(st_buffer(bosStations, (i-0.4)*5280)) %>% st_sf()
+  std <- st_difference(A, a)
+  b <-
+    st_centroid(tracts10)[std,] %>%
+    st_drop_geometry() %>%
+    left_join(dplyr::select(tracts10, GEOID)) %>%
+    st_sf() %>%
+    dplyr::select(Rent)
+  b$Rent <- as.numeric(b$Rent)
+  c <- mean(b[["Rent"]],na.rm=TRUE)
+  d <- data.frame(distance=i, meanrent=c, stringsAsFactors=FALSE)
+  rent_dis10 <- rbind(rent_dis10, d)
+#  rent_dis10 %>% add_row(distance = i, meanrent = c)
+  i <- i + 0.4
+}
+
+# for 2018
+rent_dis18 <- data.frame(
+  distance = double(),
+  meanrent = double(),
+  stringsAsFactors=FALSE
+)
+
+for (i in seq(0.4,4, by = 0.4)){
+  
+  A <- st_union(st_buffer(bosStations, i*5280)) %>% st_sf()
+  a <- st_union(st_buffer(bosStations, (i-0.4)*5280)) %>% st_sf()
+  std <- st_difference(A, a)
+  b <-
+    st_centroid(tracts18)[std,] %>%
+    st_drop_geometry() %>%
+    left_join(dplyr::select(tracts18, GEOID)) %>%
+    st_sf() %>%
+    dplyr::select(Rent)
+  b$Rent <- as.numeric(b$Rent)
+  c <- mean(b[["Rent"]],na.rm=TRUE)
+  d <- data.frame(distance=i, meanrent=c, stringsAsFactors=FALSE)
+  rent_dis18 <- rbind(rent_dis18, d)
+  #  rent_dis10 %>% add_row(distance = i, meanrent = c)
+  i <- i + 0.4
+}
+
+
+
+ggplot(rent_dis10, aes(x=distance, y=meanrent)) +
+  geom_line(arrow = arrow())+
+  geom_point()+
+  labs(title = "Change of Rent with Distance from Stations, 2010", subtitle = "Boston, MA", caption="Figure 6.1") +
+  scale_color_brewer(palette="Paired")+theme_minimal()
+  
+ggplot(rent_dis18, aes(x=distance, y=meanrent)) +
+  geom_line(arrow = arrow())+
+  geom_point()+
+  labs(title = "Change of Rent with Distance from Stations, 2018", subtitle = "Boston, MA", caption="Figure 6.2") +
+  scale_color_brewer(palette="Paired")+theme_minimal()
+```
 
 
 7.Download and wrangle point-level crime data (pick a crime type). What is the relationship between crime, transit access and rents
+```{r}
+crime12 <- read.csv("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime12.csv", header = TRUE, sep = ",", quote = "\"",
+         dec = ".")
+crime18 <- read.csv("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime18.csv", header = TRUE, sep = ",", quote = "\"",
+                       dec = ".")
+
+#crime12 <- read.csv("E:/Upenn/CPLN508/TOD-Assignment/Crime12.csv", header = TRUE, sep = ",", quote = "\"",
+#                    dec = ".")
+#crime18 <- read.csv("E:/Upenn/CPLN508/TOD-Assignment/Crime18.csv", header = TRUE, sep = ",", quote = "\"",
+#                    dec = ".")
+
+crime12.sf <- st_as_sf(crime12, coords = c("LON", "LAT"), crs = 4326, agr = "constant") %>% 
+  st_transform(st_crs(allTracts.group))
+crime18.sf <- st_as_sf(crime18, coords = c("LON", "LAT"), crs = 4326, agr = "constant")  %>% 
+  st_transform(st_crs(allTracts.group))
+
+plot(crime12.sf) ##Test plot 2012 and 2018 crime data
+plot(crime18.sf)
+
+################################Relate Crime to Census Tracts##############################
+
+####2018
+crime18.sf[st_union(allTractsBos),] #select points in crime18 that intersect Boston
+
+ggplot() + geom_sf(data = crime18.sf)
+
+ggplot() +   
+ # geom_sf(data=st_union(allTractsBos)) +
+  scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.group, "Rent.inf"),
+                    name = "Rent\n(Quintile Breaks)") +
+  facet_wrap(~TOD) +
+  mapTheme() +
+  geom_sf(data=allTracts.group, aes(fill = q5(Rent.inf))) +
+  geom_sf(data=crime18.sf, show.legend = "point", size= 1, color = "white") +
+  labs(title="Crime Relation with Transit Access, 2018", subtitle="Boston, MA", caption="Figure 7.1") +
+#  geom_sf(data = buffer, fill = "transparent", color = "red") +
+  mapTheme()
+
+
+####2012
+
+crime12.sf[st_union(allTractsBos),] #select points in crime12 that intersect Boston
+
+ggplot() + geom_sf(data = crime12.sf)
+
+ggplot() +   
+  # geom_sf(data=st_union(allTractsBos)) +
+  geom_sf(data=allTracts.group, aes(fill = q5(Rent.inf))) +
+  geom_sf(data=crime12.sf, show.legend = "point", size= 1, color = "white") +
+  #geom_sf(data = buffer, fill = "transparent", color = "red") +
+  scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.group, "Rent.inf"),
+                    name = "Rent\n(Quintile Breaks)") +
+  facet_wrap(~TOD) +
+  labs(title="Crime Relation with Transit Access, 2012", subtitle="Boston, MA", caption="Figure 7.2") +
+  mapTheme()
+
+####or we combine together?
+
+crime.sf <- rbind(crime12.sf, crime18.sf)
+
+crime.sf[st_union(allTractsBos),] #select points in crime12 that intersect Boston
+
+ggplot() +   
+  # geom_sf(data=st_union(allTractsBos)) +
+  scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.group, "Rent.inf"),
+                    name = "Rent\n(Quintile Breaks)") +
+  geom_sf(data=allTracts.group, aes(fill = q5(Rent.inf))) +
+  geom_sf(data=crime.sf, show.legend = "point", size= 1, color = "yellow") +
+  labs(title="Crime Relation with Transit Access, 2012&2018", subtitle="Boston, MA", caption="Figure 2.5") +
+  facet_wrap(~TOD+year) +
+  mapTheme() 
+
+###??I feel that crime data in both years are identical?
+```
+
