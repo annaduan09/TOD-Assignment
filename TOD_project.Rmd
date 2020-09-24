@@ -20,14 +20,13 @@ Greater Boston area. In the past decade, [MBTA] (https://www.mbtarealty.com/tran
 This makes Boston an interesting case for studying the effects of TOD. In this 
   brief, we analyze the relationship between TOD and neighborhood value. 
  
-```{r setup, include=TRUE}
-knitr::opts_chunk$set(
-	echo = TRUE,
-	message = FALSE,
-	warning = FALSE
-)
-#################################### Libraries##################################
-#install.packages("tidyverse")
+```{r Set Up, message=FALSE, warning=FALSE, include=TRUE}
+knitr::opts_chunk$set
+
+
+
+# LIBRARIES
+#install.packages("tidyverse")          
 library(tidyverse)
 #install.packages("tidycensus")
 library(tidycensus)
@@ -37,7 +36,10 @@ library(kableExtra)
 options(scipen=999)
 options(tigris_class = "sf")
 
-######################DEFINE MULTIPLE RING BUFFER FUNCTION########################
+
+
+
+# DEFINE MULTIPLE RING BUFFER FUNCTION
 multipleRingBuffer <- function(inputPolygon, maxDistance, interval) 
 {
   #create a list of distances that we'll iterate through to create each ring
@@ -88,7 +90,7 @@ multipleRingBuffer <- function(inputPolygon, maxDistance, interval)
       #create the distance field
       thisRing$distance <- distances[distancesCounter]
     }
-    
+  
     #Otherwise, if its a positive buffer
     else 
     {
@@ -118,7 +120,7 @@ multipleRingBuffer <- function(inputPolygon, maxDistance, interval)
   allRings <- st_as_sf(allRings)
 }
 
-############################Plot Formatting#################################
+#Plot Formatting
 mapTheme <- function(base_size = 12) {
   theme(
     text = element_text( color = "black"),
@@ -170,7 +172,12 @@ q5 <- function(variable) {as.factor(ntile(variable, 5))}
 # Palette
 palette5 <- c("#b3cde0","#6497b1","#005b96","#03396c","#011f4b")
 
-####################################ACS DATA####################################
+
+
+
+
+#ACS DATA
+
 
 # Input API key
 census_api_key("d9ebfd04caa0138647fbacd94c657cdecbf705e9", install = TRUE, overwrite = TRUE)
@@ -408,7 +415,7 @@ ggplot(allTracts.group)+
 ```
 
 ### Bachelor's Degrees
-The share of adults holding Bachelor's Degrees is highest in the TOD tracts, with a few exceptions in the South. With regards to growth, neither TOD and non-TOD tracts improve very significantly between 2010 and 2018. This result suggests that tracts with TOD are likely to have more educated residents, although it is unclear whehter the presence of TOD is what attracts them.
+The share of adults holding Bachelor's Degrees is highest in the TOD tracts, with a few exceptions in the South. With regards to growth, neither TOD and non-TOD tracts improve very significantly between 2010 and 2018. This result suggests that tracts with TOD are likely to have more educated residents, although it is unclear whether the presence of TOD is what attracts them.
 ```{r Bachelors Degrees, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, include=TRUE}
 ggplot(allTracts.group)+
   geom_sf(data = st_union(allTractsBos))+
@@ -422,6 +429,7 @@ ggplot(allTracts.group)+
   mapTheme() + 
   theme(plot.title = element_text(size=22))
 ```
+
 ### Median Household Income
 Figure 2.3 shows that in 2010, the neighborhoods with the highest median incomes were non-TOD. However, in 2018, numerous tracts within the TOD area have transitioned to the highest median income category. This growth could mean that TOD areas attract wealthier households, although this growth could also be the result of the multiplier effect brought by downtown development as most of the TOD tracts which experienced growth are within the downtown area.
 ```{r Median Household Income, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, include=TRUE}
@@ -437,6 +445,7 @@ ggplot(allTracts.group)+
   mapTheme() + 
   theme(plot.title = element_text(size=22))
 ```
+
 ### Households without Vehicles
 Finally, map 2.4 shows a significant difference in vehicle ownership in TOD and non-TOD neighborhoods Almost all of the TOD tracts are in the highest category of pctNoVehicle, whereas most of the non-TOD tracts have lower shares. This suggests that TOD neighborhoods are indeed more attractive to households that don't own cars due to their walkability and transit access.
 ```{r Households without Vehicles, fig.height=5, fig.width=8, message=FALSE, warning=FALSE, include=TRUE}
@@ -479,7 +488,7 @@ allTracts.Summary %>%
   kable() %>%
   kable_styling() %>%
   footnote(general_title = "\n",
-           general = "Table 1.2")
+           general = "Table 2.2")
 ```
 
 For a clearer visual comparison of these trends, let us plot them in a group bar plot. First, we see that other than pctNoVehicle, all  variables have increased citywide. In TOD neighborhoods, as noted earlier, residents are more educated, pay higher rent, and have slightly higher income in 2018. Population is lower in TOD neighborhoods in 2018, and these neighborhoods see less population growth on average than non-TOD areas, contradicting the hypothesis that transit-rich neighborhoods see the most population growth. However, the higher education attainment, income, and rent in these tracts indicate that they are attractive and that people will pay a premium for them. Most notable is the difference in pctNoVehicle in TOD and non-TOD neighborhoods. While it is decreasing citywide, TOD tracts still have more than 10% more households without vehicles, confirming that their transit options make it viable to not own a car.
@@ -495,6 +504,7 @@ allTracts.Summary %>%
     labs(title = "Indicator differences across time and space", caption="Figure 2.5") +
     plotTheme() + theme(legend.position="bottom")
 ```
+
 ## 3. How does Rent Vary with Distance from Transit?
 To further analyze the relationship between TOD and neighborhood desirability, we will look at the relationship between rent and distance from subway stations. This method allows us to look at the relationship between transit and housing without cutting off census tracts outside of the 0.5 mile buffer. 
   In both 2010 and 2018, the highest rent is at the shortest distance from transit stations, within 0.5miles, and it drops until 1 mile from stations. After this, however, both plots display two rent price peaks at roughly 1.5 and 3.2 miles. This aligns with the previous maps and group plots, suggesting that while transit rich neighborhoods have the highest rent prices due to their desirability, transit is not the dominant factor influencing rent prices, particularly outside of the 0.5 mile TOD buffer.
@@ -567,9 +577,9 @@ ggplot(rent_dis18, aes(x=distance, y=Mean_Rent)) +
   labs(title = "Rent and Distance from Transit 2010", caption="Figure 3.2", subtitle="Boston, MA (in US Dollars and Miles)") +
   scale_color_brewer(palette="Paired")+theme_minimal()
 ```
+
 ## 4. Are TOD Neighborhoods Safer?
 Another proposed benefit of TOD is neighborhood safety. With denser, walkable, and transit-rich neighborhoods, there are more people on the street. This is based in the notion of "eyes on the street," an idea termed by the great urbanist Jane Jacobs, which suggests that dense, lively neighborhoods where residents are out on the streets are safer because of the many people who witness the activity in the area. To test this idea, we plot the incidences of a common street crime category, robbery.
-
 
 At a glance, it appears that TOD tracts experience a higher rate of robberies, disproving the "eyes on the street" idea. However, it is important to consider another factor that may affect crime: rent. Research has suggested that lower rent is associated with higher crime rates. On the map it appears that TOD and non-TOD tracts that have rents in the lower categories have similar amounts of crime. However, it appears that many TOD tracts in the highest rent category do not have incidences of robberies, while most of the high-rent non-TOD tracts have some robberies. However, another confounding factor is that most TOD tracts are in the downtown area, which can often have the highest crime in a city. Overall, TOD tracts in Boston don't appear to be safer than non-TOD tracts due to the complicated factors influencing crime. However, it appears that neighborhoods which have both high rent and TOD experience less crime. 
 
