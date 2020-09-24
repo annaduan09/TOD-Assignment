@@ -1,5 +1,5 @@
 ---
-title: "TOD-assignment"
+title: "TOD Assignment"
 author: "Anna Duan, Bingchu Chen"
 date: "9/20/2020"
 output: html_document
@@ -8,17 +8,15 @@ output: html_document
 
 Transit Oriented Development (TOD) is a transportation planning concept which promotes
 developing communities around public transportation. This is believed to improve the 
-quality of life of residents and generate business by making cities more walkable, clean, and dense. On the macro level, it is believed to increase land value
-and make transit systems more efficient. In recent years, a number of cities have invested in TOD, including Boston, Massachusetts. Boston, Massachusetts has one of the 
+quality of life of residents and generate business, while increasing land value
+and making transit systems more efficient. In recent years, a number of cities have invested in TOD, including Boston, Massachusetts. Boston, Massachusetts has one of the 
 most developed public transportation systems in the country, with the Massachusetts Bay
 Transportation Authority operating subway, trolley, bus, and boat services within the
 Greater Boston area. In the past decade, [MBTA] (https://www.mbtarealty.com/transit-oriented-development/) has worked with private developers and the city to support more than 50 TOD projects near its stations. 
 
 This makes Boston an interesting case for studying the effects of TOD. In this 
   brief, we analyze the relationship between TOD and neighborhood value. 
-
-
-1.Show your data wrangling work.
+ 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 #################################### Libraries##################################
@@ -33,7 +31,6 @@ options(scipen=999)
 options(tigris_class = "sf")
 
 ######################DEFINE MULTIPLE RING BUFFER FUNCTION########################
-
 multipleRingBuffer <- function(inputPolygon, maxDistance, interval) 
 {
   #create a list of distances that we'll iterate through to create each ring
@@ -110,7 +107,6 @@ multipleRingBuffer <- function(inputPolygon, maxDistance, interval)
     #iterate the number of rings counter
     numberOfRingsCounter <- numberOfRingsCounter + 1
   }
-  
   #convert the allRings data frame to an sf data frame
   allRings <- st_as_sf(allRings)
 }
@@ -131,7 +127,6 @@ mapTheme <- function(base_size = 12) {
     panel.border = element_rect(colour = "black", fill=NA, size=2),
     strip.text.x = element_text(size = 10))
 }
-
 plotTheme <- function(base_size = 12) {
   theme(
     text = element_text( color = "black"),
@@ -154,7 +149,6 @@ plotTheme <- function(base_size = 12) {
     strip.text.x = element_text(size = 10)
   )
 }
-
 # Quintile Map Breaks
 qBr <- function(df, variable, rnd) {
   if (missing(rnd)) {
@@ -165,9 +159,7 @@ qBr <- function(df, variable, rnd) {
                  c(.01,.2,.4,.6,.8), na.rm=T)
   }
 }
-
 q5 <- function(variable) {as.factor(ntile(variable, 5))}
-
 # Palette
 palette5 <- c("#b3cde0","#6497b1","#005b96","#03396c","#011f4b")
 
@@ -176,21 +168,23 @@ palette5 <- c("#b3cde0","#6497b1","#005b96","#03396c","#011f4b")
 # Input API key
 census_api_key("d9ebfd04caa0138647fbacd94c657cdecbf705e9", install = TRUE, overwrite = TRUE)
 
-# Median Rent, MHHINC, Population, Bachelor's, No. Vehicle (home owner, renter), Households (owner, renter occupied)
-## projection: (NAD 1983 StatePlane Massachusetts Mainland FIPS 2001 Feet)
+# Variables: Median Rent, Median HH Income, Population, Bachelor's, No Vehicle (home owner, renter), Households (owner, renter-occupied)
+# Projection: (NAD 1983 StatePlane Massachusetts Mainland FIPS 2001 Feet)
+#2010
 oritracts10 <-  
   get_acs(geography = "tract", variables = c("B25058_001E", "B19013_001E", "B01003_001E", "B06009_005E", 
                                              "B25044_003E", "B25044_010E", "B07013_002E", "B07013_003E"), 
           year=2010, state=25, county=025, geometry=T) %>% 
   st_transform('ESRI:102686')
-
+#2018
 oritracts18 <-  
   get_acs(geography = "tract", variables = c("B25058_001E", "B19013_001E", "B01003_001E", "B06009_005E", 
                                              "B25044_003E", "B25044_010E", "B07013_002E", "B07013_003E"), 
           year=2018, state=25, county=025, geometry=T) %>% 
   st_transform('ESRI:102686')
 
-##############################long form to wide form###############################
+##############################Long form to wide form###############################
+#2010
 tracts10 <- 
   oritracts10 %>%
   dplyr::select( -NAME, -moe) %>%
@@ -204,9 +198,8 @@ tracts10 <-
          noVehicle_hmre = B25044_010,
          Households_hmow = B07013_002,
          Households_hmre = B07013_003)
-
 st_drop_geometry(tracts10)[1:3,]
-
+#2018
 tracts18 <- 
   oritracts18 %>%
   dplyr::select( -NAME, -moe) %>%
@@ -220,10 +213,10 @@ tracts18 <-
          noVehicle_hmre  = B25044_010,
          Households_hmow = B07013_002,
          Households_hmre = B07013_003)
-
 st_drop_geometry(tracts18)[1:3,]
 
-###################################mutate##########################################
+###################################Mutate##########################################
+#2010
 tracts10 <- 
   tracts10 %>%
   mutate(pctBach = ifelse(population > 0, bachelor / population, 0),
@@ -232,7 +225,7 @@ tracts10 <-
                                   (Households_hmow + Households_hmre),0),
          year = "2010") %>%
   dplyr::select(-Households_hmow,-Households_hmre,-noVehicle_hmow,-noVehicle_hmre,-bachelor)
-
+#2018
 tracts18 <- 
   tracts18 %>%
   mutate(pctBach = ifelse(population > 0, bachelor / population, 0),
@@ -242,7 +235,7 @@ tracts18 <-
          year = "2018") %>%
   dplyr::select(-Households_hmow,-Households_hmre,-noVehicle_hmow,-noVehicle_hmre,-bachelor)
 
-###################################bind 2010 and 2018#############################
+###################################Bind 2010 and 2018#############################
 allTracts <- rbind(tracts10,tracts18)
 
 ##################################Remove non-Boston tracts######################
@@ -281,10 +274,11 @@ bosTracts <- c("25025010405", "25025010404", "25025010801", "25025010702", "2502
 allTractsBos <- 
   subset(allTracts, GEOID %in% bosTracts)
 
-#################################transit data######################################
+#################################Transit Data####################################
 mbtaNode <- st_read("/Users/annaduan/Documents/GitHub/TOD-Assignment/mbta_node.geojson") %>% st_transform(st_crs(allTractsBos)) 
 
-############################################Exclude MBTA stops outside Boston############################################
+#######################Exclude MBTA stops outside Boston#######################
+#Filter out non-Boston stations
 bosStations <-
   mbtaNode %>%
   filter(station != "Alewife" & station != "Assembly" & station != "Beachmont" & station !=  "Beaconsfield" & station !=  "Bellingham Square" & station !=  "Box District" & station !=  
@@ -296,7 +290,7 @@ bosStations <-
          "Summit Avenue" & station !=  "Tappan Street" & station !=  "Valley Road" & station !=  "Waban" & station !=  "Washington Square" & station !=  "Wellington" & station !=  "Wollaston" & station !=  
          "Wonderland" & station !=  "Woodland" & station !=  "Bellingham Sq"  & station !=  "Eastern Ave"  & station !=  "Brandon Hall" & station != "Summit Ave/Winchester St" & station != "Lechmere")
 
-####################################set buffer##################################
+####################################Set TOD buffer##################################
 bosBuffers <- 
   rbind(
     st_buffer(bosStations, 2640) %>% #in feet
@@ -306,7 +300,7 @@ bosBuffers <-
       st_sf() %>%
       mutate(Legend = "Unioned Buffer"))
 
-#############################spatial operation##################################
+#############################Select by Centroids################################
 buffer <- filter(bosBuffers, Legend=="Unioned Buffer")
 
 selectCentroids <-
@@ -316,8 +310,7 @@ selectCentroids <-
     st_sf() %>%
     dplyr::select(year, population, Rent) %>%
     mutate(Selection_Type = "Select by Centroids")
-
-######################10#########################
+#2010
 selectCentroids10 <-
   st_centroid(tracts10)[buffer,] %>%
     st_drop_geometry() %>%
@@ -325,8 +318,7 @@ selectCentroids10 <-
     st_sf() %>%
     dplyr::select(year, population, Rent) %>%
     mutate(Selection_Type = "Select by Centroids")
-
-#########################18########################
+#2018
 selectCentroids18 <-
   st_centroid(tracts18)[buffer,] %>%
   st_drop_geometry() %>%
@@ -335,8 +327,9 @@ selectCentroids18 <-
   dplyr::select(year, population, Rent) %>%
   mutate(Selection_Type = "Select by Centroids")
 
-###########################INDICATOR MAPS########################################
+###########################INDICATOR MAPS#######################################
 #$100 in 2010 is equivalent in purchasing power to about $115.21 in 2018
+#Select tracts within and outside of 0.5mile buffer
 allTracts.group <- 
   rbind(
     st_centroid(allTractsBos)[buffer,] %>%
@@ -352,14 +345,48 @@ allTracts.group <-
   mutate(Rent.inf = ifelse(year == "2010", Rent * 1.1521, Rent))
 ```
 
+## 1. Does TOD attract growth in population and rent?
+If the hypothesis that transit-rich neighborhoods are desirable, it is then expected that neighborhoods close to a transit station should experience growth in population and rent as more people are drawn to them and willing to pay a premium to live near transit. The maps below document changes in rent and population in TOD tracts (within 0.5 miles of a transit station) between 2010 and 2018. In figure 1.1, we see substantial population growth in census tracts in the downtown area, near the intersections of the subway lines. Similarly, in figure 1.2, there are increases in rent citywide, with the most marked change occurring in the downtown area. Based on this, it appears that over time TOD neighborhoods in Boston are growing in population and experiencing increases in land value.
 
-2.Four small-multiple (2000 & 2017+) visualizations comparing four selected Census variables across time and space (TOD vs. non-TOD).
-## TOD and neighborhood indicators 
-First, we need to look at how Transit Oriented Development correlates with features in 
-communities.
+```{r graduated symbol maps, include = TRUE}
+centectroi10_pop <- st_centroid(selectCentroids10[,1])
+centectroi18_pop <- st_centroid(selectCentroids18[,1])
+troi_pop <- rbind(selectCentroids10[,1:2], selectCentroids18[,1:2]) 
+oitroi_pop.group <- st_centroid(troi_pop)
+centectroi10_re <- st_centroid(selectCentroids10[,2])
+centectroi18_re <- st_centroid(selectCentroids18[,2])
+troi_rent <- rbind(selectCentroids10[,c(1,3)], selectCentroids18[,c(1,3)]) 
+oitroi_rent.group <- st_centroid(troi_rent)
+#population
+ggplot() + 
+  geom_sf(data=st_union(allTracts.group)) +
+  geom_sf(data = buffer, fill = "white") + 
+  geom_sf(data = oitroi_pop.group, aes(size = population), shape = 21, 
+      fill = "lightblue", alpha = 0.8, show.legend = "point") + 
+  scale_size_continuous(range = c(0.05, 4))+
+  facet_wrap(~year)+
+  labs(title = "Population 2010-2018", subtitle = "Boston, MA", caption="Figure 1.1") +
+  mapTheme() + 
+  theme(plot.title = element_text(size=22))
+#rent
+ggplot() + 
+  geom_sf(data=st_union(allTractsBos)) +
+  geom_sf(data = buffer, fill = "white") + 
+  geom_sf(data = oitroi_rent.group, aes(size = Rent), shape = 21, color = "transparent",
+          fill = "pink", alpha = 1, show.legend = "point") + 
+  scale_size_continuous(range = c(0.05, 4))+
+  facet_wrap(~year)+
+  labs(title = "Rent 2010-2018", subtitle = "Boston, MA", caption="Figure 1.2") +
+  mapTheme() + 
+  theme(plot.title = element_text(size=22))
+```
+
+
+## 2. How does TOD affect other neighborhood characteristics?
+Now that we know TOD neighborhoods in Boston have been growing, the next step in determining whether TOD leads to greater growth and desirability is to compare TOD neighborhoods to non-TOD neighborhoods. In this section, we have also added additional neighborhood characteristics to our analysis: pctBach is the share of adults with Bachelor's degrees, MedHHInc is median household income, and pctNoVehicle is the share of households which don't own a private vehicle. Neighborhoods which are desirable should experience growth in both pctBach and MedHHInc over time. Neighborhoods which experience pctNoVehicle growth may be more amenable to walking or using public transit. 
 
 ### Population
-If TOD is a desirable trait in a neighborhood, then transit-rich neighborhoods should see an increase in population over time. However, since the TOD area where transit lines intersect also tend to be the city downtown area. Transit may not be the reason behind the population boost.
+Citywide, TOD areas have some of the most populated census tracts, although some non-TOD tracts in the South have populations in the highest quintile. In terms of growth, however, the greatest population growth appears to occur within TOD areas, in the downtown region. While this supports the idea that TOD neighborhoods attract growth, the extent to which TOD influenced this growth is unclear because the downtown area may also be attractive for a range of other reasons including business, recreation, and culture.
 ```{r population, include=TRUE}
 ggplot(allTracts.group)+
   geom_sf(data = st_union(allTractsBos))+
@@ -368,13 +395,14 @@ ggplot(allTracts.group)+
   scale_fill_manual(values = palette5,
                     labels = qBr(allTracts.group, "population"),
                     name = "Population\n(Quintile Breaks, TOD in Red)") +
-  labs(title = "Total Population 2010&2018", subtitle = "Boston", caption="Figure 2.1") +
+  labs(title = "Total Population 2010 - 2018", subtitle = "Boston, MA", caption="Figure 2.1") +
   facet_wrap(~year)+
   mapTheme() + 
   theme(plot.title = element_text(size=22))
 ```
 
-For share of adults with bachelor's degrees, it is expected that the more desirable a neighborhood is, the higher this number will be. However, it could also be that 
+### Bachelor's Degrees
+The share of adults holding Bachelor's Degrees is highest in the TOD tracts, with a few exceptions in the South. With regards to growth, neither TOD and non-TOD tracts improve very significantly between 2010 and 2018. This result suggests that tracts with TOD are likely to have more educated residents, although it is unclear whehter the presence of TOD is what attracts them.
 ```{r bachelors, include=TRUE}
 ggplot(allTracts.group)+
   geom_sf(data = st_union(allTractsBos))+
@@ -382,14 +410,14 @@ ggplot(allTracts.group)+
   geom_sf(data = buffer, fill = "transparent", color = "red")+
   scale_fill_manual(values = palette5,
                     labels = qBr(allTracts.group, "pctBach"),
-                    name = "% Adults >25 Years with Bachelor's\n(Quintile Breaks, TOD in Red)") +
-  labs(title = "Share of Adults with Bachelor's Degree 2010-2018", subtitle = "Boston", caption="Figure 2.2") +
+                    name = "% >25 Years with Bachelor's\n(Quintile Breaks, TOD in Red)") +
+  labs(title = "Share of Adults with Bachelor's Degree 2010 - 2018", subtitle = "Boston, MA", caption="Figure 2.2") +
   facet_wrap(~year)+
   mapTheme() + 
   theme(plot.title = element_text(size=22))
 ```
-
-For median household income in this area, it's expected that households living within the TOD area will see a higher growth in income than those who live in the non-TOD area. However, it could also be the result of the multiplier effect brought by the downtown development.
+### Median Household Income
+Figure 2.3 shows that in 2010, the neighborhoods with the highest median incomes were non-TOD. However, in 2018, numerous tracts within the TOD area have transitioned to the highest median income category. This growth could mean that TOD areas attract wealthier households, although this growth could also be the result of the multiplier effect brought by downtown development as most of the TOD tracts which experienced growth are within the downtown area.
 ```{r income, include=TRUE}
 ggplot(allTracts.group)+
   geom_sf(data = st_union(allTractsBos))+
@@ -398,13 +426,13 @@ ggplot(allTracts.group)+
   scale_fill_manual(values = palette5,
                     labels = qBr(allTracts.group, "medHHInc"),
                     name = "Median HH Income\n(Quintile Breaks, TOD in Red)") +
-  labs(title = "Median Household Income 2010-2018", subtitle = "Boston", caption="Figure 2.3") +
+  labs(title = "Median Household Income 2010 - 2018", subtitle = "Boston, MA (US Dollars)", caption="Figure 2.3") +
   facet_wrap(~year)+
   mapTheme() + 
   theme(plot.title = element_text(size=22))
 ```
-
-people owning less vehicles due to the developed subway system? This variable seems to have less to do with the subway development to me because the subway was built long ago and the effect it had on vehicles should be much smaller now. Should we change another variable?
+### Households without Vehicles
+Finally, map 2.4 shows a significant difference in vehicle ownership in TOD and non-TOD neighborhoods Almost all of the TOD tracts are in the highest category of pctNoVehicle, whereas most of the non-TOD tracts have lower shares. This suggests that TOD neighborhoods are indeed more attractive to households that don't own cars due to their walkability and transit access.
 ```{r noVehicle, include=TRUE}
 ggplot(allTracts.group)+
   geom_sf(data = st_union(allTractsBos))+
@@ -412,16 +440,16 @@ ggplot(allTracts.group)+
   geom_sf(data = buffer, fill = "transparent", color = "red")+
   scale_fill_manual(values = palette5,
                     labels = qBr(allTracts.group, "pctNoVehicle"),
-                    name = "% Households without Vehicle\n(Quintile Breaks, TOD in Red)") +
-  labs(title = "Share of Households without a Vehicle 2010-2018", subtitle = "Percentage", caption="Figure 2.4") +
+                    name = "% Households\n(Quintile Breaks, TOD in Red)") +
+  labs(title = "Share of Households without Vehicle 2010 - 2018", subtitle = "Boston, MA", caption="Figure 2.4") +
   facet_wrap(~year)+
   mapTheme() + 
   theme(plot.title = element_text(size=22))
 ```
 
-
-3.One grouped bar plot making these same comparisons.
-```{r barPlot, include=TRUE}
+Below, the previous trends are summarized in table 2.1 and 2.2. In 2.2, the data is presented in long form.
+```{r table, include=TRUE}
+#Summarize allTracts.group
 allTracts.Summary <- 
   st_drop_geometry(allTracts.group) %>%
   group_by(year, TOD) %>%
@@ -431,27 +459,12 @@ allTracts.Summary <-
             pctNoVehicle = mean(pctNoVehicle, na.rm = T),
             MedHHInc = mean(medHHInc, na.rm = T))
 
-###########################TOD Indicator Plots##################################
-
-allTracts.Summary %>%
-  gather(Variable, Value, -year, -TOD) %>%
-  ggplot(aes(year, Value, fill = TOD)) +
-    geom_bar(stat = "identity", position = "dodge") +
-    facet_wrap(~Variable, scales = "free", ncol=5) +
-    scale_fill_manual(values = c("#bae4bc", "#0868ac")) +
-    labs(title = "Indicator differences across time and space", caption="Figure 3.1") +
-    plotTheme() + theme(legend.position="bottom")
-```
-
-
-4.One table making these same comparisons.
-```{r table, include=True}
 kable(allTracts.Summary) %>%
   kable_styling() %>%
   footnote(general_title = "\n",
-           general = "Table 4.1")
+           general = "Table 2.1")
 
-########change to long form######
+#Change to Long Form
 allTracts.Summary %>%
   unite(year.TOD, year, TOD, sep = ": ", remove = T) %>%
   gather(Variable, Value, -year.TOD) %>%
@@ -460,52 +473,32 @@ allTracts.Summary %>%
   kable() %>%
   kable_styling() %>%
   footnote(general_title = "\n",
-           general = "Table 4.2")
+           general = "Table 1.2")
 ```
 
+For a clearer visual comparison of these trends, let us plot them in a group bar plot. First, we see that other than pctNoVehicle, all  variables have increased citywide. In TOD neighborhoods, as noted earlier, residents are more educated, pay higher rent, and have slightly higher income in 2018. Population is lower in TOD neighborhoods in 2018, and these neighborhoods see less population growth on average than non-TOD areas, contradicting the hypothesis that transit-rich neighborhoods see the most population growth. However, the higher education attainment, income, and rent in these tracts indicate that they are attractive and that people will pay a premium for them. Most notable is the difference in pctNoVehicle in TOD and non-TOD neighborhoods. While it is decreasing citywide, TOD tracts still have more than 10% more households without vehicles, confirming that their transit options make it viable to not own a car.
+```{r barPlot, include=TRUE}
 
-5.Create two graduated symbol maps of population and rent within 0.5 mile of each transit station. Google for more information, but a graduate symbol map represents quantities for each transit station proportionally.
-```{r graduated symbol maps, include = True}
-centectroi10_pop <- st_centroid(selectCentroids10[,1])
-centectroi18_pop <- st_centroid(selectCentroids18[,1])
-troi_pop <- rbind(selectCentroids10[,1:2], selectCentroids18[,1:2]) 
-oitroi_pop.group <- st_centroid(troi_pop)
-centectroi10_re <- st_centroid(selectCentroids10[,2])
-centectroi18_re <- st_centroid(selectCentroids18[,2])
-troi_rent <- rbind(selectCentroids10[,c(1,3)], selectCentroids18[,c(1,3)]) 
-oitroi_rent.group <- st_centroid(troi_rent)
-
-ggplot() + 
-  geom_sf(data=st_union(allTracts.group)) +
-  geom_sf(data = buffer, fill = "white") + 
-  geom_sf(data = oitroi_pop.group, aes(size = population), shape = 21, 
-      fill = "lightblue", alpha = 0.8, show.legend = "point") + 
-  scale_size_continuous(range = c(0.1, 6))+
-  facet_wrap(~year)+
-  labs(title = "Population 2010-2018", subtitle = "Boston, MA", caption="Figure 5.1") +
-  mapTheme() + 
-  theme(plot.title = element_text(size=22))
-
-ggplot() + 
-  geom_sf(data=st_union(allTractsBos)) +
-  geom_sf(data = buffer, fill = "white") + 
-  geom_sf(data = oitroi_rent.group, aes(size = Rent), shape = 21, color = "transparent",
-          fill = "pink", alpha = 1, show.legend = "point") + 
-  scale_size_continuous(range = c(0.05, 6))+
-  facet_wrap(~year)+
-  labs(title = "Rent 2010-2018", subtitle = "Boston, MA", caption="Figure 5.2") +
-  mapTheme() + 
-  theme(plot.title = element_text(size=22))
+###########################TOD Indicator Plots##################################
+allTracts.Summary %>%
+  gather(Variable, Value, -year, -TOD) %>%
+  ggplot(aes(year, Value, fill = TOD)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    facet_wrap(~Variable, scales = "free", ncol=5) +
+    scale_fill_manual(values = c("#bae4bc", "#0868ac")) +
+    labs(title = "Indicator differences across time and space", caption="Figure 2.5") +
+    plotTheme() + theme(legend.position="bottom")
 ```
+## 3. How does Rent Vary with Distance from Transit?
+To further analyze the relationship between TOD and neighborhood desirability, we will look at the relationship between rent and distance from subway stations. This method allows us to look at the relationship between transit and housing without cutting off census tracts outside of the 0.5 mile buffer. 
+  In both 2010 and 2018, the highest rent is at the shortest distance from transit stations, within 0.5miles, and it drops until 1 mile from stations. After this, however, both plots display two rent price peaks at roughly 1.5 and 3.2 miles. This aligns with the previous maps and group plots, suggesting that while transit rich neighborhoods have the highest rent prices due to their desirability, transit is not the dominant factor influencing rent prices, particularly outside of the 0.5 mile TOD buffer.
 
-6.Create a geom_line plot that shows mean rent as a function of distance to subway stations (Figure x.x.x). To do this you will need to use the multipleRingBuffer function in the ppaR package.
-```{r geom_line, include=True}
-multiBuffers <- multipleRingBuffer(bosStations, 4, 0.4)
-
-# for 2010
+```{r geom_line, include=TRUE}
+multiBuffers <- multipleRingBuffer(bosStations, 4, 0.4) %>% st_sf()
+# 2010
 rent_dis10 <- data.frame(
   distance = double(),
-  meanrent = double(),
+  Mean_Rent = double(),
   stringsAsFactors=FALSE
 )
 
@@ -522,16 +515,16 @@ for (i in seq(0.4,4, by = 0.4)){
     dplyr::select(Rent)
   b$Rent <- as.numeric(b$Rent)
   c <- mean(b[["Rent"]],na.rm=TRUE)
-  d <- data.frame(distance=i, meanrent=c, stringsAsFactors=FALSE)
+  d <- data.frame(distance=i, Mean_Rent=c, stringsAsFactors=FALSE)
   rent_dis10 <- rbind(rent_dis10, d)
-#  rent_dis10 %>% add_row(distance = i, meanrent = c)
+#  rent_dis10 %>% add_row(distance = i, Mean_Rent = c)
   i <- i + 0.4
 }
 
 # for 2018
 rent_dis18 <- data.frame(
   distance = double(),
-  meanrent = double(),
+  Mean_Rent = double(),
   stringsAsFactors=FALSE
 )
 
@@ -548,30 +541,30 @@ for (i in seq(0.4,4, by = 0.4)){
     dplyr::select(Rent)
   b$Rent <- as.numeric(b$Rent)
   c <- mean(b[["Rent"]],na.rm=TRUE)
-  d <- data.frame(distance=i, meanrent=c, stringsAsFactors=FALSE)
+  d <- data.frame(distance=i, Mean_Rent=c, stringsAsFactors=FALSE)
   rent_dis18 <- rbind(rent_dis18, d)
-  #  rent_dis10 %>% add_row(distance = i, meanrent = c)
+  #  rent_dis10 %>% add_row(distance = i, Mean_Rent = c)
   i <- i + 0.4
 }
 
-
-
-ggplot(rent_dis10, aes(x=distance, y=meanrent)) +
+#2010
+ggplot(rent_dis10, aes(x=distance, y=Mean_Rent)) +
   geom_line(arrow = arrow())+
   geom_point()+
-  labs(title = "Change of Rent with Distance from Stations, 2010", subtitle = "Boston, MA", caption="Figure 6.1") +
+  labs(title = "Rent and Distance from Transit 2010", caption="Figure 3.1", subtitle="Boston, MA (in US Dollars and Miles)") +
   scale_color_brewer(palette="Paired")+theme_minimal()
   
-ggplot(rent_dis18, aes(x=distance, y=meanrent)) +
+#2018
+ggplot(rent_dis18, aes(x=distance, y=Mean_Rent)) +
   geom_line(arrow = arrow())+
   geom_point()+
-  labs(title = "Change of Rent with Distance from Stations, 2018", subtitle = "Boston, MA", caption="Figure 6.2") +
+  labs(title = "Rent and Distance from Transit 2010", caption="Figure 3.2", subtitle="Boston, MA (in US Dollars and Miles)") +
   scale_color_brewer(palette="Paired")+theme_minimal()
 ```
+## 4. Are TOD Neighborhoods Safer?
+Another proposed benefit of TOD is neighborhood safety. With denser, walkable, and transit-rich neighborhoods, there are more people on the street. This is based in the notion of "eyes on the street," an idea termed by the great urbanist Jane Jacobs, which suggests that dense, lively neighborhoods where residents are out on the streets are safer because of the many people who witness the activity in the area. To test this idea, we plot the incidences of a common street crime category, robbery. 
 
-
-7.Download and wrangle point-level crime data (pick a crime type). What is the relationship between crime, transit access and rents
-```{r}
+```{r crime, include=TRUE}
 crime12 <- read.csv("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime12.csv", header = TRUE, sep = ",", quote = "\"",
          dec = ".")
 crime18 <- read.csv("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime18.csv", header = TRUE, sep = ",", quote = "\"",
@@ -587,16 +580,9 @@ crime12.sf <- st_as_sf(crime12, coords = c("LON", "LAT"), crs = 4326, agr = "con
 crime18.sf <- st_as_sf(crime18, coords = c("LON", "LAT"), crs = 4326, agr = "constant")  %>% 
   st_transform(st_crs(allTracts.group))
 
-plot(crime12.sf) ##Test plot 2012 and 2018 crime data
-plot(crime18.sf)
-
 ################################Relate Crime to Census Tracts##############################
 
-####2018
-crime18.sf[st_union(allTractsBos),] #select points in crime18 that intersect Boston
-
-ggplot() + geom_sf(data = crime18.sf)
-
+#2018
 ggplot() +   
  # geom_sf(data=st_union(allTractsBos)) +
   scale_fill_manual(values = palette5,
@@ -606,17 +592,12 @@ ggplot() +
   mapTheme() +
   geom_sf(data=allTracts.group, aes(fill = q5(Rent.inf))) +
   geom_sf(data=crime18.sf, show.legend = "point", size= 1, color = "white") +
-  labs(title="Crime Relation with Transit Access, 2018", subtitle="Boston, MA", caption="Figure 7.1") +
+  labs(title="Crime, Transit Access, and Rent, 2018", subtitle="Boston, MA", caption="Figure 7.1") +
 #  geom_sf(data = buffer, fill = "transparent", color = "red") +
   mapTheme()
 
 
-####2012
-
-crime12.sf[st_union(allTractsBos),] #select points in crime12 that intersect Boston
-
-ggplot() + geom_sf(data = crime12.sf)
-
+#2012
 ggplot() +   
   # geom_sf(data=st_union(allTractsBos)) +
   geom_sf(data=allTracts.group, aes(fill = q5(Rent.inf))) +
@@ -626,26 +607,22 @@ ggplot() +
                     labels = qBr(allTracts.group, "Rent.inf"),
                     name = "Rent\n(Quintile Breaks)") +
   facet_wrap(~TOD) +
-  labs(title="Crime Relation with Transit Access, 2012", subtitle="Boston, MA", caption="Figure 7.2") +
+  labs(title="Crime, Transit Access, and Rent, 2012", subtitle="Boston, MA", caption="Figure 7.2") +
   mapTheme()
 
-####or we combine together?
+#or we combine together?
 
-crime.sf <- rbind(crime12.sf, crime18.sf)
+#crime.sf <- rbind(crime12.sf, crime18.sf)
 
-crime.sf[st_union(allTractsBos),] #select points in crime12 that intersect Boston
-
-ggplot() +   
-  # geom_sf(data=st_union(allTractsBos)) +
-  scale_fill_manual(values = palette5,
-                    labels = qBr(allTracts.group, "Rent.inf"),
-                    name = "Rent\n(Quintile Breaks)") +
-  geom_sf(data=allTracts.group, aes(fill = q5(Rent.inf))) +
-  geom_sf(data=crime.sf, show.legend = "point", size= 1, color = "yellow") +
-  labs(title="Crime Relation with Transit Access, 2012&2018", subtitle="Boston, MA", caption="Figure 2.5") +
-  facet_wrap(~TOD+year) +
-  mapTheme() 
-
-###??I feel that crime data in both years are identical?
+#ggplot() +   
+ # geom_sf(data=st_union(allTractsBos)) +
+ #scale_fill_manual(values = palette5,
+ #                   labels = qBr(allTracts.group, "Rent.inf"),
+ #                   name = "Rent\n(Quintile Breaks)") +
+ # geom_sf(data=allTracts.group, aes(fill = q5(Rent.inf))) +
+ # geom_sf(data=crime.sf, show.legend = "point", size= 0.5, color = "yellow") +
+ # labs(title="Crime Relation with Transit Access, 2012&2018", subtitle="Boston, MA", caption="Figure 2.5") +
+ # facet_wrap(~TOD+year) +
+ # mapTheme() 
 ```
 

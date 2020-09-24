@@ -780,7 +780,7 @@ multiBuffers <- multipleRingBuffer(bosStations, 4, 0.4) %>% st_sf()
 # for 2010
 rent_dis10 <- data.frame(
   distance = double(),
-  meanrent = double(),
+  Mean_Rent = double(),
   stringsAsFactors=FALSE
 )
 
@@ -797,16 +797,16 @@ for (i in seq(0.4,4, by = 0.4)){
     dplyr::select(Rent)
   b$Rent <- as.numeric(b$Rent)
   c <- mean(b[["Rent"]],na.rm=TRUE)
-  d <- data.frame(distance=i, meanrent=c, stringsAsFactors=FALSE)
+  d <- data.frame(distance=i, Mean_Rent=c, stringsAsFactors=FALSE)
   rent_dis10 <- rbind(rent_dis10, d)
-#  rent_dis10 %>% add_row(distance = i, meanrent = c)
+#  rent_dis10 %>% add_row(distance = i, Mean_Rent = c)
   i <- i + 0.4
 }
 
 # for 2018
 rent_dis18 <- data.frame(
   distance = double(),
-  meanrent = double(),
+  Mean_Rent = double(),
   stringsAsFactors=FALSE
 )
 
@@ -823,20 +823,20 @@ for (i in seq(0.4,4, by = 0.4)){
     dplyr::select(Rent)
   b$Rent <- as.numeric(b$Rent)
   c <- mean(b[["Rent"]],na.rm=TRUE)
-  d <- data.frame(distance=i, meanrent=c, stringsAsFactors=FALSE)
+  d <- data.frame(distance=i, Mean_Rent=c, stringsAsFactors=FALSE)
   rent_dis18 <- rbind(rent_dis18, d)
-  #  rent_dis10 %>% add_row(distance = i, meanrent = c)
+  #  rent_dis10 %>% add_row(distance = i, Mean_Rent = c)
   i <- i + 0.4
 }
 
 
 
-ggplot(rent_dis10, aes(x=distance, y=meanrent)) +
+ggplot(rent_dis10, aes(x=distance, y=Mean_Rent)) +
   geom_line(arrow = arrow())+
   geom_point()+
   scale_color_brewer(palette="Paired")+theme_minimal()
   
-ggplot(rent_dis18, aes(x=distance, y=meanrent)) +
+ggplot(rent_dis18, aes(x=distance, y=Mean_Rent)) +
   geom_line(arrow = arrow())+
   geom_point()+
   scale_color_brewer(palette="Paired")+theme_minimal()
