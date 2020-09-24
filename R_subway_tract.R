@@ -432,10 +432,10 @@ ggplot() +
 ####################################set buffer##################################
 bosBuffers <- 
   rbind(
-    st_buffer(bosStations, 2640) %>% #in feet
+    st_buffer(bosStations, 0.5*5280) %>% #in feet
       mutate(Legend = "Buffer") %>%
       dplyr::select(Legend),
-    st_union(st_buffer(bosStations, 2640)) %>% #union buffer
+    st_union(st_buffer(bosStations, 0.5*5280)) %>% #union buffer
       st_sf() %>%
       mutate(Legend = "Unioned Buffer"))
 
@@ -557,6 +557,7 @@ ggplot(allTracts.group)+
   facet_wrap(~year)+
   mapTheme() + 
   theme(plot.title = element_text(size=22))
+#BC:need to fix the legend
 
 #3: Income Map 
 ggplot(allTracts.group)+
@@ -673,7 +674,8 @@ fiveMarkets <- rbind(red, green, orange, blue, downtown)
 ## Silver isn't subway line + red covers downtown because it's mapped after!
 ggplot() + 
   geom_sf(data=st_union(allTractsBos)) +
-  geom_sf(data=fiveMarkets, aes(colour = Submarket), show.legend = "point", size= 1) +
+  geom_sf(data=fiveMarkets, aes(colour = Submarket), fill = "transparent", show.legend = "point", size= 1) +
+  geom_sf(data=downtown, aes(colour = Submarket), fill = "transparent", show.legend = "point", size= 1) +
   scale_colour_manual(values = c("blue","black","green","orange","red")) +
   labs(title="Five Submarkets", subtitle="Boston, MA", caption="Figure 1.3") +
   mapTheme()
@@ -772,7 +774,8 @@ ggplot() +
 
 #############################multi-ring buffer##################################
 
-multiBuffers <- multipleRingBuffer(bosStations, 10, 0.5)
+multiBuffers <- multipleRingBuffer(bosStations, 4, 0.4) %>% st_sf()
+
 #buffernum <- subset(multiBuffers, distance = num)
 # for 2010
 rent_dis10 <- data.frame(
@@ -781,11 +784,13 @@ rent_dis10 <- data.frame(
   stringsAsFactors=FALSE
 )
 
-for (i in seq(0.5,10, by = 0.5)){
+for (i in seq(0.4,4, by = 0.4)){
   
-  a <- st_union(st_buffer(bosStations, i*5280)) %>% st_sf()
+  A <- st_union(st_buffer(bosStations, i*5280)) %>% st_sf()
+  a <- st_union(st_buffer(bosStations, (i-0.4)*5280)) %>% st_sf()
+  std <- st_difference(A, a)
   b <-
-    st_centroid(tracts10)[a,] %>%
+    st_centroid(tracts10)[std,] %>%
     st_drop_geometry() %>%
     left_join(dplyr::select(tracts10, GEOID)) %>%
     st_sf() %>%
@@ -795,9 +800,8 @@ for (i in seq(0.5,10, by = 0.5)){
   d <- data.frame(distance=i, meanrent=c, stringsAsFactors=FALSE)
   rent_dis10 <- rbind(rent_dis10, d)
 #  rent_dis10 %>% add_row(distance = i, meanrent = c)
-  i <- i + 0.5
+  i <- i + 0.4
 }
-
 
 # for 2018
 rent_dis18 <- data.frame(
@@ -806,11 +810,13 @@ rent_dis18 <- data.frame(
   stringsAsFactors=FALSE
 )
 
-for (i in seq(0.5,10, by = 0.5)){
+for (i in seq(0.4,4, by = 0.4)){
   
-  a <- st_union(st_buffer(bosStations, i*5280)) %>% st_sf()
+  A <- st_union(st_buffer(bosStations, i*5280)) %>% st_sf()
+  a <- st_union(st_buffer(bosStations, (i-0.4)*5280)) %>% st_sf()
+  std <- st_difference(A, a)
   b <-
-    st_centroid(tracts18)[a,] %>%
+    st_centroid(tracts18)[std,] %>%
     st_drop_geometry() %>%
     left_join(dplyr::select(tracts18, GEOID)) %>%
     st_sf() %>%
@@ -820,44 +826,29 @@ for (i in seq(0.5,10, by = 0.5)){
   d <- data.frame(distance=i, meanrent=c, stringsAsFactors=FALSE)
   rent_dis18 <- rbind(rent_dis18, d)
   #  rent_dis10 %>% add_row(distance = i, meanrent = c)
-  i <- i + 0.5
+  i <- i + 0.4
 }
 
-##?maybe we should edit the color and size of the lines?
+
 
 ggplot(rent_dis10, aes(x=distance, y=meanrent)) +
   geom_line(arrow = arrow())+
-  geom_point()
+  geom_point()+
+  scale_color_brewer(palette="Paired")+theme_minimal()
+  
 ggplot(rent_dis18, aes(x=distance, y=meanrent)) +
   geom_line(arrow = arrow())+
-  geom_point()
+  geom_point()+
+  scale_color_brewer(palette="Paired")+theme_minimal()
 
 #if we have moe data for rent
 
-ggplot(df3, aes(x=dose, y=len, group=supp, color=supp)) + 
-  geom_errorbar(aes(ymin=len-sd, ymax=len+sd), width=.1, 
-                position=position_dodge(0.05)) +
-  geom_line() + geom_point()+
-  scale_color_brewer(palette="Paired")+theme_minimal()
+#ggplot(df3, aes(x=dose, y=len, group=supp, color=supp)) + 
+#  geom_errorbar(aes(ymin=len-sd, ymax=len+sd), width=.1, 
+#                position=position_dodge(0.05)) +
+#  geom_line() + geom_point()+
+#  scale_color_brewer(palette="Paired")+theme_minimal()
 
-#from help
-# Setting line type vs colour/size
-# Line type needs to be applied to a line as a whole, so it can
-# not be used with colour or size that vary across a line
-x <- seq(0.01, .99, length.out = 100)
-df <- data.frame(
-  x = rep(x, 2),
-  y = c(qlogis(x), 2 * qlogis(x)),
-  group = rep(c("a","b"),
-              each = 100)
-)
-p <- ggplot(df, aes(x=x, y=y, group=group))
-# These work
-p + geom_line(linetype = 2)
-p + geom_line(aes(colour = group), linetype = 2)
-p + geom_line(aes(colour = x))
-# But this doesn't
-should_stop(p + geom_line(aes(colour = x), linetype=2))
 ####################################Read Crime Data############################################
 
 #AD: changed file name and now read csv - easier to modify the geometry this way
@@ -865,6 +856,11 @@ crime12 <- read.csv("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime12.csv
          dec = ".")
 crime18 <- read.csv("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime18.csv", header = TRUE, sep = ",", quote = "\"",
                        dec = ".")
+
+#crime12 <- read.csv("E:/Upenn/CPLN508/TOD-Assignment/Crime12.csv", header = TRUE, sep = ",", quote = "\"",
+#                    dec = ".")
+#crime18 <- read.csv("E:/Upenn/CPLN508/TOD-Assignment/Crime18.csv", header = TRUE, sep = ",", quote = "\"",
+#                    dec = ".")
 
 crime12.sf <- st_as_sf(crime12, coords = c("LON", "LAT"), crs = 4326, agr = "constant") %>% 
   st_transform(st_crs(allTracts.group))
@@ -875,6 +871,8 @@ plot(crime12.sf) ##Test plot 2012 and 2018 crime data
 plot(crime18.sf)
 
 ################################Relate Crime to Census Tracts##############################
+
+####2018
 crime18.sf[st_union(allTractsBos),] #select points in crime18 that intersect Boston
 
 ggplot() + geom_sf(data = crime18.sf)
@@ -883,15 +881,49 @@ ggplot() +
  # geom_sf(data=st_union(allTractsBos)) +
   scale_fill_manual(values = palette5,
                     labels = qBr(allTracts.group, "Rent.inf"),
-                    name = "Rent\n(Quintile Breaks, TOD in RED)") +
-  labs(title = "Median Rent 2010-2018", subtitle = "Real Dollars") +
+                    name = "Rent\n(Quintile Breaks)") +
   facet_wrap(~TOD) +
   mapTheme() +
   geom_sf(data=allTracts.group, aes(fill = q5(Rent.inf))) +
   geom_sf(data=crime18.sf, show.legend = "point", size= 1, color = "white") +
-  labs(title="Crime", subtitle="Boston, MA", caption="Figure 2.5") +
+  labs(title="Crime 2018", subtitle="Boston, MA", caption="Figure 2.5") +
 #  geom_sf(data = buffer, fill = "transparent", color = "red") +
   mapTheme()
 
 
+####2012
 
+crime12.sf[st_union(allTractsBos),] #select points in crime12 that intersect Boston
+
+ggplot() + geom_sf(data = crime12.sf)
+
+ggplot() +   
+  # geom_sf(data=st_union(allTractsBos)) +
+  geom_sf(data=allTracts.group, aes(fill = q5(Rent.inf))) +
+  geom_sf(data=crime12.sf, show.legend = "point", size= 1, color = "white") +
+  #geom_sf(data = buffer, fill = "transparent", color = "red") +
+  scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.group, "Rent.inf"),
+                    name = "Rent\n(Quintile Breaks)") +
+  facet_wrap(~TOD) +
+  labs(title="Crime 2012", subtitle="Boston, MA", caption="Figure 2.5") +
+  mapTheme()
+
+####or we combine together?
+
+crime.sf <- rbind(crime12.sf, crime18.sf)
+
+crime.sf[st_union(allTractsBos),] #select points in crime12 that intersect Boston
+
+ggplot() +   
+  # geom_sf(data=st_union(allTractsBos)) +
+  scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.group, "Rent.inf"),
+                    name = "Rent\n(Quintile Breaks)") +
+  geom_sf(data=allTracts.group, aes(fill = q5(Rent.inf))) +
+  geom_sf(data=crime.sf, show.legend = "point", size= 1, color = "yellow") +
+  labs(title="Crime 2012", subtitle="Boston, MA", caption="Figure 2.5") +
+  facet_wrap(~TOD+year) +
+  mapTheme() 
+
+###??I feel that crime data in both years are identical?
