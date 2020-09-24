@@ -636,7 +636,7 @@ allTracts.Summary %>%
     labs(title = "Indicator differences across time and space") +
     plotTheme() + theme(legend.position="bottom")
 
-##########################Examining six submarkets ###########################
+##########################Examining five submarkets ###########################
 downtown <-
   st_intersection(
     st_buffer(filter(bosStations, line == "ORANGE/RED"), 2640) %>% st_union()) %>%
@@ -680,27 +680,27 @@ ggplot() +
 
 # Bind buffers to tracts and map them or make small multiple plots
 
-allTracts.sixMarkets <-
-  st_join(st_centroid(allTractsBos), sixMarkets) %>%
+allTracts.fiveMarkets <-
+  st_join(st_centroid(allTractsBos), fiveMarkets) %>%
   st_drop_geometry() %>%
   left_join(allTractsBos) %>%
   mutate(Submarket = replace_na(Submarket, "Non-TOD")) %>%
   st_sf() 
 
 ggplot() +
-  geom_sf(data=st_union(allTracts.sixMarkets)) +
-  geom_sf(data = allTracts.sixMarkets, aes(fill = q5(Rent))) +
+  geom_sf(data=st_union(allTracts.fiveMarkets)) +
+  geom_sf(data = allTracts.fiveMarkets, aes(fill = q5(Rent))) +
   facet_wrap(~Submarket + year) + 
   scale_fill_manual(values = palette5,
-                    labels = qBr(allTracts.sixMarkets, "Rent"),
+                    labels = qBr(allTracts.fiveMarkets, "Rent"),
                     name = "Rent\n(Quintile Breaks)") +
   labs(title = "Rent", subtitle = "Boston") +
   mapTheme() + theme(plot.title = element_text(size=18))
 
 
 #spread goes long to wide, gather opposite
-allTracts.sixMarkets.Summary <- 
-  st_drop_geometry(allTracts.sixMarkets) %>%
+allTracts.fiveMarkets.Summary <- 
+  st_drop_geometry(allTracts.fiveMarkets) %>%
   group_by(year, Submarket) %>%
   summarize(Rent = mean(Rent, na.rm = T),
             Population = mean(population, na.rm = T),
@@ -708,13 +708,13 @@ allTracts.sixMarkets.Summary <-
             pctNoVehicle = mean(pctNoVehicle, na.rm = T),
             MedHHInc = mean(medHHInc, na.rm = T))
 
-kable(allTracts.sixMarkets.Summary) %>%
+kable(allTracts.fiveMarkets.Summary) %>%
   kable_styling() %>%
   footnote(general_title = "\n",
            general = "Table 2.3")
 
 ########change to long form######
-allTracts.sixMarkets.Summary %>%
+allTracts.fiveMarkets.Summary %>%
   unite(year.Submarket, year, Submarket, sep = ": ", remove = T) %>%
   gather(Variable, Value, -year.Submarket) %>%
   mutate(Value = round(Value, 2)) %>%
@@ -727,7 +727,7 @@ allTracts.sixMarkets.Summary %>%
 
 ###########################TOD Indicator Plots##################################
 
-allTracts.sixMarkets.Summary %>%
+allTracts.fiveMarkets.Summary %>%
   gather(Variable, Value, -year, -Submarket) %>%
   ggplot(aes(year, Value, fill = Submarket)) +
   geom_bar(stat = "identity", position = "dodge") +
