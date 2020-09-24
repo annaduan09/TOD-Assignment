@@ -474,12 +474,6 @@ ggplot(selectCentroids)+
   mapTheme() + 
   theme(plot.title = element_text(size=22))
 
-
-
-###map the centroids to show population change
-#?what to do if the maps in 2010 and 2018 are different? should we combine the two
-#?or just present the two seperately?
-##AD: I think it's fine - it still works for facet wrap
 ######################10#########################
 selectCentroids10 <-
   st_centroid(tracts10)[buffer,] %>%
@@ -646,58 +640,49 @@ allTracts.Summary %>%
     labs(title = "Indicator differences across time and space") +
     plotTheme() + theme(legend.position="bottom")
 
-# Examining six submarkets
-
+##########################Examining six submarkets ###########################
 downtown <-
   st_intersection(
-    st_buffer(filter(bosStations, line == "ORANGE"), 2640) %>% st_union(),
-    st_buffer(filter(bosStations, line == "RED"), 2640) %>% st_union(),
-    st_buffer(filter(bosStations, line == "SILVER"), 2640) %>% st_union()) %>%
+    st_buffer(filter(bosStations, line == "ORANGE/RED"), 2640) %>% st_union()) %>%
   st_sf() %>%
   mutate(Submarket = "downtown")
 
 blue <-
-  st_buffer(filter(bosStations, line == "BLUE"), 2640) %>% st_union() %>%
+    st_buffer(filter(bosStations, line %in% c("BLUE", "BLUE/ORANGE", "BLUE/GREEN")), 2640) %>% st_union() %>%
   st_sf() %>%
   st_difference(downtown) %>%
   mutate(Submarket = "blue")
 
 orange <-
-  st_buffer(filter(bosStations, line == "ORANGE"), 2640) %>% st_union() %>%
+  st_buffer(filter(bosStations, line %in% c("ORANGE", "BLUE/ORANGE", "GREEN/ORANGE", "ORANGE/RED")), 2640) %>% st_union() %>%
   st_sf() %>%
   st_difference(downtown) %>%
   mutate(Submarket = "orange")
 
 red <-
-  st_buffer(filter(bosStations, line == "RED"), 2640) %>% st_union() %>%
+  st_buffer(filter(bosStations, line %in% c("RED", "ORANGE/RED", "GREEN/RED")), 2640) %>% st_union() %>%
   st_sf() %>%
   st_difference(downtown) %>%
   mutate(Submarket = "red")
 
-silver <-
-  st_buffer(filter(bosStations, line == "SILVER"), 2640) %>% st_union() %>%
-  st_sf() %>%
-  st_difference(downtown) %>%
-  mutate(Submarket = "silver")
-
 green <-
-  st_buffer(filter(bosStations, line == "GREEN"), 2640) %>% st_union() %>%
+  st_buffer(filter(bosStations, line %in% c("GREEN", "BLUE/GREEN", "GREEN/ORANGE", "GREEN/RED")), 2640) %>% st_union() %>%
   st_sf() %>%
   st_difference(downtown) %>%
   mutate(Submarket = "green")
 
-sixMarkets <- rbind(downtown, silver, red, green, orange, blue)
 
-#problem: can't see downtown on the map?
-##AD: silver is covering it, i'm not sure why we aren't able to get rid of the overlap..
+fiveMarkets <- rbind(red, green, orange, blue, downtown)
+
+## Silver isn't subway line + red covers downtown because it's mapped after!
 ggplot() + 
   geom_sf(data=st_union(allTractsBos)) +
-  geom_sf(data=silver, aes(colour = Submarket), show.legend = "point", size= 1) +
-  scale_colour_manual(values = c("blue","black","green","orange","red","gray")) +
-  labs(title="six submarkets", subtitle="Boston, MA", caption="Figure 1.3") +
+  geom_sf(data=fiveMarkets, aes(colour = Submarket), show.legend = "point", size= 1) +
+  scale_colour_manual(values = c("blue","black","green","orange","red")) +
+  labs(title="Five Submarkets", subtitle="Boston, MA", caption="Figure 1.3") +
   mapTheme()
 
-# You can then bind these buffers to tracts and map them or make small multiple plots
+# Bind buffers to tracts and map them or make small multiple plots
 
 allTracts.sixMarkets <-
   st_join(st_centroid(allTractsBos), sixMarkets) %>%
@@ -756,7 +741,7 @@ allTracts.sixMarkets.Summary %>%
   plotTheme() + theme(legend.position="bottom")
 
 
-###############################graduate map#########################################
+###############################Graduated Symbol Map#########################################
 centectroi10_pop <- st_centroid(selectCentroids10[,1])
 centectroi18_pop <- st_centroid(selectCentroids18[,1])
 troi_pop <- rbind(selectCentroids10[,1:2], selectCentroids18[,1:2]) 
@@ -877,16 +862,40 @@ p + geom_line(aes(colour = group), linetype = 2)
 p + geom_line(aes(colour = x))
 # But this doesn't
 should_stop(p + geom_line(aes(colour = x), linetype=2))
-####################################Crime Data############################################
+####################################Read Crime Data############################################
+
 #AD: changed file name and now read csv - easier to modify the geometry this way
+crime12 <- read.csv("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime12.csv", header = TRUE, sep = ",", quote = "\"",
+         dec = ".")
+crime18 <- read.csv("/Users/annaduan/Documents/GitHub/TOD-Assignment/Crime18.csv", header = TRUE, sep = ",", quote = "\"",
+                       dec = ".")
 
 crime12.sf <- st_as_sf(crime12, coords = c("LON", "LAT"), crs = 4326, agr = "constant") %>% 
   st_transform(st_crs(allTracts.group))
-
 crime18.sf <- st_as_sf(crime18, coords = c("LON", "LAT"), crs = 4326, agr = "constant")  %>% 
   st_transform(st_crs(allTracts.group))
 
-plot(crime12.sf)
+plot(crime12.sf) ##Test plot 2012 and 2018 crime data
 plot(crime18.sf)
+
+################################Relate Crime to Census Tracts##############################
+crime18.sf[st_union(allTractsBos),] #select points in crime18 that intersect Boston
+
+ggplot() + geom_sf(data = crime18.sf)
+
+ggplot() +   
+ # geom_sf(data=st_union(allTractsBos)) +
+  scale_fill_manual(values = palette5,
+                    labels = qBr(allTracts.group, "Rent.inf"),
+                    name = "Rent\n(Quintile Breaks, TOD in RED)") +
+  labs(title = "Median Rent 2010-2018", subtitle = "Real Dollars") +
+  facet_wrap(~TOD) +
+  mapTheme() +
+  geom_sf(data=allTracts.group, aes(fill = q5(Rent.inf))) +
+  geom_sf(data=crime18.sf, show.legend = "point", size= 1, color = "white") +
+  labs(title="Crime", subtitle="Boston, MA", caption="Figure 2.5") +
+#  geom_sf(data = buffer, fill = "transparent", color = "red") +
+  mapTheme()
+
 
 
