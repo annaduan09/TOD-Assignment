@@ -149,7 +149,7 @@ qBr <- function(df, variable, rnd) {
 q5 <- function(variable) {as.factor(ntile(variable, 5))}
 
 # Palette
-palette5 <- c("#b3cde0","#6497b1","#005b96","#03396c","#011f4b")
+palette5 <- c("#daf9f5","#98dbd9","#5dafb6","#1d696b","#003233")
 
 ####################################ACS DATA####################################
 
@@ -735,7 +735,7 @@ allTracts.fiveMarkets.Summary %>%
   geom_bar(stat = "identity", position = "dodge") +
   facet_wrap(~Variable, scales = "free", ncol=5) +
   scale_fill_manual(values = c("#335BFF", "#000000", "#34D539", "#F9FD0A", "#FF7000", "#FF0000", "#CDCDCD")) +
-  labs(title = "Indicator differences across time and space") +
+  labs(title = "Indicators Across TOD Submarkets") +
   plotTheme() + theme(legend.position="bottom")
 
 
